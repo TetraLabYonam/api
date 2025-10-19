@@ -1,0 +1,22 @@
+spring:
+  datasource:
+#    url: jdbc:h2:tcp://localhost/~/jpashop
+    url : jdbc:h2:mem:test
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  h2:
+    console: # H2 DB를 웹에서 관리할 수 있는 기능
+      enabled: true           # H2 Console 사용 여부
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        # show_sql: true
+        format_sql: true
+  logging.level:
+    org.hibernate.SQL: debug
+# org.hibernate.type: trace #스프링 부트 2.x, hibernate5
+# org.hibernate.orm.jdbc.bind: trace #스프링 부트 3.x, hibernate6
