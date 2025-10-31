@@ -1,0 +1,14 @@
+# Google Geocoding API Key Configuration
+#
+# 이 파일을 복사하여 application-API-KEY.properties 파일을 생성하세요:
+# cp application-API-KEY.properties.example application-API-KEY.properties
+#
+# Google Cloud Console에서 API 키 발급 방법:
+# 1. https://console.cloud.google.com/ 접속
+# 2. 프로젝트 생성 또는 선택
+# 3. "API 및 서비스" > "사용자 인증 정보" 메뉴 이동
+# 4. "사용자 인증 정보 만들기" > "API 키" 선택
+# 5. Geocoding API 활성화 (https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com)
+# 6. 발급받은 API 키를 아래에 입력
+
+geocoding-api-key=YOUR_GOOGLE_GEOCODING_API_KEY_HERE

@@ -21,5 +21,4 @@ spring:
 # org.hibernate.type: trace #스프링 부트 2.x, hibernate5
 # org.hibernate.orm.jdbc.bind: trace #스프링 부트 3.x, hibernate6
 
-# Google Geocoding API Key
-geocoding-api-key: AIzaSyD2r1NQKN3AUuCHbrSUP0fqAuFwNaPMepc
+# Google Geocoding API Key는 application-API-KEY.properties 파일에서 관리됩니다.
