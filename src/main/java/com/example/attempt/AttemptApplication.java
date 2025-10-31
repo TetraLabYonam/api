@@ -5,6 +5,7 @@ import com.example.attempt.Repository.MemberRepository;
 import com.example.attempt.Repository.PlaceRepository;
 import com.example.attempt.domain.Attend;
 import com.example.attempt.domain.Member;
+import com.example.attempt.domain.Unit;
 import com.example.attempt.service.MemberService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,12 +22,12 @@ public class AttemptApplication implements CommandLineRunner {
 		SpringApplication.run(AttemptApplication.class, args);
 	}
 
-    private final MemberService memberService;
+    private final MemberRepository memberRepository;
     private final AttendRepository attendRepository;
     private final PlaceRepository placeRepository;
 
-    public AttemptApplication(MemberService memberService, AttendRepository attendRepository, PlaceRepository placeRepository) {
-        this.memberService = memberService;
+    public AttemptApplication(MemberRepository memberRepository, AttendRepository attendRepository, PlaceRepository placeRepository) {
+        this.memberRepository = memberRepository;
         this.attendRepository = attendRepository;
         this.placeRepository = placeRepository;
     }
@@ -34,7 +35,8 @@ public class AttemptApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         Member member1 = new Member("신경준","010-1234-5678");
-        memberService.join(member1);
+        Member member2 = new Member("홍길동","010-5678-3456");
+        Member member3 = new Member("김철수","010-1111-1111");
 
         Attend attend = new Attend();
 

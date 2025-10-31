@@ -10,31 +10,31 @@ import java.util.List;
 
 @Entity
 @NoArgsConstructor
+@Data
 public class Place {
     @Id
     @GeneratedValue
     @Column(name = "PLACE_ID")
     private Long id;
 
-    @Column(name = "place_name")
+    @Column(name = "unit_name")
     private String name;
 
+    @Column(name = "place_address")
+    private String address;
+
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "place")
-    private List<Schedule>  schedules = new ArrayList<>();
+    private List<Schedule> schedules = new ArrayList<>();
 
     private Double latitude;
     private Double longitude;
 
-    public Place(String name, Double latitude, Double longitude) {
+
+    public Place(String name, String address, Double latitude, Double longitude) {
         this.name = name;
+        this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
     }
 
-    @Data
-    @AllArgsConstructor
-    class LocationDto {
-        private double lat;
-        private double lng;
-    }
 }

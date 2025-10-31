@@ -1,7 +1,6 @@
 package com.example.attempt.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +15,7 @@ import java.util.*;
 @Entity
 @NoArgsConstructor
 @Table
+@Data
 public class Member {
 
     @Id @GeneratedValue
@@ -27,32 +27,12 @@ public class Member {
     @OneToMany(mappedBy = "member")
     private List<Attend> attends = new ArrayList<>();
 
+    @OneToOne(fetch = FetchType.LAZY)
+    private Unit unit;
+
     public Member(String username, String phoneNumber) {
         this.username = username;
         this.phoneNumber = phoneNumber;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
 }

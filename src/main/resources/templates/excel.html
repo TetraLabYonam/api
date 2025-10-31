@@ -76,6 +76,44 @@
         .location-item:last-child {
             border-bottom: none;
         }
+        .save-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .save-btn {
+            background: #34a853;
+            color: white;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .save-btn:hover {
+            background: #2d8e47;
+        }
+        .save-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -83,7 +121,7 @@
     <div class="title">Google Map V2 - Excel Upload</div>
 
     <div class="upload-section">
-        <form method="post" enctype="multipart/form-data" th:action="@{/mapV2}">
+        <form method="post" enctype="multipart/form-data" th:action="@{/map-excel}">
             <div class="form-group">
                 <label class="form-label" for="file">엑셀 파일을 선택하세요 (주소가 포함된 파일)</label>
                 <input type="file"
@@ -101,6 +139,7 @@
         <h3>업로드된 위치 정보 (<span th:text="${locations.size()}">0</span>개)</h3>
         <div th:each="loc, iterStat : ${locations}" class="location-item">
             <strong th:text="${iterStat.count}">1</strong>.
+            <span th:text="${loc.businessUnit}">주소</span>:
             <span th:text="${loc.address}">주소</span> -
             (위도: <span th:text="${loc.lat}">0</span>,
             경도: <span th:text="${loc.lng}">0</span>)
@@ -108,11 +147,60 @@
     </div>
 
     <div id="map" th:if="${locations != null and !locations.isEmpty()}"></div>
+
+    <div th:if="${locations != null and !locations.isEmpty()}" class="save-section">
+        <button id="saveBtn" class="save-btn" onclick="saveLocationsToDb()">데이터베이스에 저장</button>
+        <div id="message" class="message"></div>
+    </div>
 </div>
 
 <script th:inline="javascript">
     const LOCATIONS = /*[[${locations}]]*/ [];
     const API_KEY = /*[[${googleMapsApiKey}]]*/ '';
+
+    // 데이터베이스에 저장하는 함수
+    function saveLocationsToDb() {
+        const saveBtn = document.getElementById('saveBtn');
+        const messageDiv = document.getElementById('message');
+
+        // 버튼 비활성화
+        saveBtn.disabled = true;
+        saveBtn.textContent = '저장 중...';
+
+        // POST 요청
+        fetch('/api/place/save-all', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(LOCATIONS)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('저장에 실패했습니다.');
+            }
+            return response.text();
+        })
+        .then(data => {
+            // 성공 메시지 표시
+            messageDiv.textContent = data;
+            messageDiv.className = 'message success';
+            messageDiv.style.display = 'block';
+
+            // 버튼 텍스트 변경
+            saveBtn.textContent = '저장 완료';
+        })
+        .catch(error => {
+            // 에러 메시지 표시
+            messageDiv.textContent = '저장 중 오류가 발생했습니다: ' + error.message;
+            messageDiv.className = 'message error';
+            messageDiv.style.display = 'block';
+
+            // 버튼 재활성화
+            saveBtn.disabled = false;
+            saveBtn.textContent = '데이터베이스에 저장';
+        });
+    }
 
     if (LOCATIONS.length > 0) {
         window.initMap = function() {

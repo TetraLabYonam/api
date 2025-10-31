@@ -1,8 +1,10 @@
 package com.example.attempt.domain;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
+@Data
 public class Attend {
     @Id
     @GeneratedValue

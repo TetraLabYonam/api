@@ -30,7 +30,6 @@ public class MapController {
 
     private final String ADDRESS ="경상남도 양산시 남부13길 10, 50622";
 
-
     @GetMapping("/mapV1")
     public String showMapV1(Model model) throws IOException, InterruptedException, ApiException {
         List<LocationDto> locations = getLocations();
@@ -47,36 +46,36 @@ public class MapController {
         return "map";
     }
 
-    @GetMapping("/mapV2")
-    public String showMapV2(Model model) {
+    @GetMapping("/map-excel")
+    public String showMapXls(Model model) {
         model.addAttribute("googleMapsApiKey", AUTH_TOKEN);
-        return "mapV2";
+        return "excel";
     }
 
-    @PostMapping("/mapV2")
-    public String showMapV2Post(@RequestParam("file") MultipartFile file, Model model) {
+    @PostMapping("/map-excel")
+    public String showMapXls(@RequestParam("file") MultipartFile file, Model model) {
         try {
-            // 엑셀 파일에서 주소 리스트 추출
-            List<String> addresses = parseExcelFile(file);
+            // 엑셀 파일에서 사업단명과 주소 리스트 추출
+            List<AddressData> addressDataList = parseExcelFile(file);
 
             // 주소를 위도/경도로 변환
-            List<LocationDto> locations = getLocationsFromAddresses(addresses);
+            List<LocationDto> locations = getLocationsFromAddresses(addressDataList);
 
             model.addAttribute("locations", locations);
             model.addAttribute("googleMapsApiKey", AUTH_TOKEN);
 
-            return "mapV2";
+            return "excel";
         } catch (Exception e) {
             model.addAttribute("error", "파일 처리 중 오류가 발생했습니다: " + e.getMessage());
             model.addAttribute("googleMapsApiKey", AUTH_TOKEN);
-            return "mapV2";
+            return "excel";
         }
     }
 
 
-    // 엑셀 파일에서 주소 리스트를 추출하는 메소드
-    private List<String> parseExcelFile(MultipartFile file) throws IOException {
-        List<String> addresses = new ArrayList<>();
+    // 엑셀 파일에서 사업단명과 주소 리스트를 추출하는 메소드
+    private List<AddressData> parseExcelFile(MultipartFile file) throws IOException {
+        List<AddressData> addressDataList = new ArrayList<>();
 
         try (InputStream inputStream = file.getInputStream();
              Workbook workbook = new XSSFWorkbook(inputStream)) {
@@ -87,18 +86,25 @@ public class MapController {
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row != null) {
-                    Cell cell = row.getCell(0); // 첫 번째 열에서 주소 읽기
-                    if (cell != null) {
-                        String address = getCellValueAsString(cell);
-                        if (address != null && !address.trim().isEmpty()) {
-                            addresses.add(address.trim());
-                        }
+                    // 첫 번째 열: 사업단명
+                    Cell businessUnitCell = row.getCell(0);
+                    String businessUnit = getCellValueAsString(businessUnitCell);
+
+                    // 두 번째 열: 주소
+                    Cell addressCell = row.getCell(1);
+                    String address = getCellValueAsString(addressCell);
+
+                    if (address != null && !address.trim().isEmpty()) {
+                        addressDataList.add(new AddressData(
+                            businessUnit != null ? businessUnit.trim() : "",
+                            address.trim()
+                        ));
                     }
                 }
             }
         }
 
-        return addresses;
+        return addressDataList;
     }
 
     // 셀 값을 문자열로 변환하는 헬퍼 메소드
@@ -125,9 +131,8 @@ public class MapController {
         }
     }
 
-    // 주소 리스트를 위도/경도로 변환하는 메소드
-    private List<LocationDto> getLocationsFromAddresses(List<String> addresses)
-            throws IOException, InterruptedException, ApiException {
+    // 사업단명과 주소 리스트를 위도/경도로 변환하는 메소드
+    private List<LocationDto> getLocationsFromAddresses(List<AddressData> addressDataList) {
         List<LocationDto> locations = new ArrayList<>();
 
         GeoApiContext context = new GeoApiContext.Builder()
@@ -135,13 +140,14 @@ public class MapController {
                 .build();
 
         try {
-            for (String address : addresses) {
+            for (AddressData addressData : addressDataList) {
                 try {
-                    GeocodingResult[] response = GeocodingApi.geocode(context, address).await();
+                    GeocodingResult[] response = GeocodingApi.geocode(context, addressData.getAddress()).await();
 
                     if (response != null && response.length > 0) {
                         locations.add(new LocationDto(
-                                address,
+                                addressData.getBusinessUnit(),
+                                addressData.getAddress(),
                                 response[0].geometry.location.lat,
                                 response[0].geometry.location.lng
                         ));
@@ -151,7 +157,7 @@ public class MapController {
                     Thread.sleep(100);
                 } catch (Exception e) {
                     // 개별 주소 변환 실패시 로그만 남기고 계속 진행
-                    System.err.println("주소 변환 실패: " + address + " - " + e.getMessage());
+                    System.err.println("주소 변환 실패: " + addressData.getAddress() + " - " + e.getMessage());
                 }
             }
         } finally {
@@ -174,6 +180,7 @@ public class MapController {
         context.shutdown();
 
         locations.add(new LocationDto(
+                "",  // 사업단명 없음
                 ADDRESS,
                 response[0].geometry.location.lat,
                 response[0].geometry.location.lng
@@ -185,7 +192,15 @@ public class MapController {
 
     @Data
     @AllArgsConstructor
+    private static class AddressData {
+        private String businessUnit;  // 사업단명
+        private String address;       // 주소
+    }
+
+    @Data
+    @AllArgsConstructor
     private static class LocationDto {
+        private String businessUnit;  // 사업단명
         private String address;
         private double lat;
         private double lng;
