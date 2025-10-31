@@ -1,12 +1,11 @@
 package com.example.attempt.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.*;
 
 /***
  * 회원은 출석을 할 수 있다. - 출석 여부는 관리자가 관리한다.
@@ -15,18 +14,45 @@ import lombok.NoArgsConstructor;
  */
 
 @Entity
-@Data
 @NoArgsConstructor
 @Table
 public class Member {
 
     @Id @GeneratedValue
+    @Column(name = "MEMBER_ID")
     private Long id; // 직번으로 기본키 설정 여부
     private String username;
     private String phoneNumber;
 
+    @OneToMany(mappedBy = "member")
+    private List<Attend> attends = new ArrayList<>();
+
     public Member(String username, String phoneNumber) {
         this.username = username;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
 }

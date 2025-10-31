@@ -1,0 +1,71 @@
+<!-- src/main/resources/templates/map.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>Google Map</title>
+    <style>
+        /* 지도는 height가 없으면 표시되지 않습니다! */
+        #map {
+            width: 100%;
+            height: 70vh;  /* 필요 시 조절 */
+            border-radius: 12px;
+        }
+        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+        .wrap {
+            max-width: 960px; margin: 24px auto; padding: 0 16px;
+        }
+        .title { margin: 12px 0 16px; font-weight: 700; font-size: 18px; }
+        .coords { color: #555; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="title" th:text="${address}">Selected Location</div>
+    <div class="coords">
+        <span>Lat: <span th:text="${lat}">0</span></span>,
+        <span>Lng: <span th:text="${lng}">0</span></span>
+    </div>
+    <div id="map"></div>
+</div>
+
+<!-- 서버 변수를 JS로 안전하게 주입 -->
+<script th:inline="javascript">
+    const LAT = /*[[${lat}]]*/ 0;
+    const LNG = /*[[${lng}]]*/ 0;
+    const ADDRESS = /*[[${address}]]*/ 'Selected Location';
+
+    // Google Maps API callback 함수를 전역으로 선언
+    window.initMap = function() {
+        const pos = { lat: LAT, lng: LNG };
+        const map = new google.maps.Map(document.getElementById('map'), {
+            center: pos,
+            zoom: 17,
+            mapTypeControl: false,
+            streetViewControl: false
+        });
+
+        const marker = new google.maps.Marker({
+            position: pos,
+            map,
+            title: ADDRESS
+        });
+
+        const info = new google.maps.InfoWindow({
+            content: `<div style="min-width:200px"><b>${ADDRESS}</b><br/>(${LAT.toFixed(6)}, ${LNG.toFixed(6)})</div>`
+        });
+
+        // 첫 로드시 바로 열기
+        info.open({ anchor: marker, map });
+
+        // 클릭 이벤트 리스너 추가
+        marker.addListener('click', () => {
+            info.open({ anchor: marker, map });
+        });
+    };
+</script>
+
+<!-- Google Maps JS API: 키를 서버에서 주입 -->
+<script th:src="@{|https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&callback=initMap|}" async defer></script>
+</body>
+</html>
