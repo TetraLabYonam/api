@@ -1,0 +1,271 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>방 관리 - 관리자</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .admin-header {
+            background-color: #dc3545;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #343a40;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .room-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← 메인으로 돌아가기</a>
+
+    <div class="admin-header">
+        <h1>🔐 방 관리 시스템 (관리자)</h1>
+        <p>모든 방의 상태를 확인하고 관리할 수 있습니다</p>
+    </div>
+
+    <div class="stats" id="statsArea">
+        <div class="stat-card">
+            <div class="stat-number" id="totalRooms">0</div>
+            <div class="stat-label">전체 방 수</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="totalUsers">0</div>
+            <div class="stat-label">총 발급된 번호표</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-primary" onclick="createRoom()">새 방 만들기</button>
+        <button class="btn btn-secondary" onclick="refreshRooms()">새로고침</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>방 코드</th>
+                <th>방 제목</th>
+                <th>현재 번호</th>
+                <th>발급된 인원</th>
+                <th>생성 시간</th>
+                <th>관리</th>
+            </tr>
+        </thead>
+        <tbody id="roomTableBody">
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 40px;">로딩중...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        // 페이지 로드 시 방 목록 불러오기
+        window.onload = function() {
+            loadRooms();
+        };
+
+        // 방 목록 불러오기
+        async function loadRooms() {
+            try {
+                const response = await fetch('/api/rooms/details');
+                const rooms = await response.json();
+
+                updateStats(rooms);
+                renderRoomTable(rooms);
+            } catch (error) {
+                console.error('방 목록 로드 실패:', error);
+                alert('방 목록을 불러오는데 실패했습니다.');
+            }
+        }
+
+        // 통계 업데이트
+        function updateStats(rooms) {
+            const totalRooms = rooms.length;
+            const totalUsers = rooms.reduce((sum, room) => sum + room.issuedCount, 0);
+
+            document.getElementById('totalRooms').textContent = totalRooms;
+            document.getElementById('totalUsers').textContent = totalUsers;
+        }
+
+        // 방 테이블 렌더링
+        function renderRoomTable(rooms) {
+            const tableBody = document.getElementById('roomTableBody');
+            tableBody.innerHTML = '';
+
+            if (rooms.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">생성된 방이 없습니다.</td></tr>';
+                return;
+            }
+
+            rooms.forEach(room => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${room.roomUid}</strong></td>
+                    <td>${room.title || '제목 없음'}</td>
+                    <td style="text-align: center;">${room.currentNumber}</td>
+                    <td style="text-align: center;">${room.issuedCount}명</td>
+                    <td>${formatDateTime(room.createdAt)}</td>
+                    <td>
+                        <div class="room-actions">
+                            <button class="btn btn-secondary" onclick="viewRoom('${room.roomUid}')">입장</button>
+                            <button class="btn btn-danger" onclick="resetRoom('${room.roomUid}')">초기화</button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 날짜 포맷팅
+        function formatDateTime(dateTimeStr) {
+            const date = new Date(dateTimeStr);
+            return date.toLocaleString('ko-KR');
+        }
+
+        // 방 생성
+        async function createRoom() {
+            const title = prompt('방 제목을 입력하세요:');
+            if (title === null) return;
+
+            try {
+                const response = await fetch('/api/rooms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'title=' + encodeURIComponent(title)
+                });
+                const data = await response.json();
+                alert('방이 생성되었습니다!\n방 코드: ' + data.roomUid);
+                loadRooms();
+            } catch (error) {
+                console.error('방 생성 실패:', error);
+                alert('방 생성에 실패했습니다.');
+            }
+        }
+
+        // 방 새로고침
+        function refreshRooms() {
+            loadRooms();
+        }
+
+        // 방 입장 (새 탭)
+        function viewRoom(roomUid) {
+            window.open('/rooms/' + roomUid, '_blank');
+        }
+
+        // 방 초기화
+        async function resetRoom(roomUid) {
+            if (!confirm(`방 ${roomUid}을(를) 초기화하시겠습니까?\n모든 발급 기록이 삭제됩니다.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/rooms/${roomUid}/reset`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                alert(data.message);
+                loadRooms();
+            } catch (error) {
+                console.error('초기화 실패:', error);
+                alert('방 초기화에 실패했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>

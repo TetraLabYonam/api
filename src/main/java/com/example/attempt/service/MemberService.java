@@ -1,6 +1,6 @@
 package com.example.attempt.service;
 
-import com.example.attempt.Repository.MemberRepository;
+import com.example.attempt.repository.MemberRepository;
 import com.example.attempt.domain.Member;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

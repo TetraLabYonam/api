@@ -1,12 +1,10 @@
 package com.example.attempt;
 
-import com.example.attempt.Repository.AttendRepository;
-import com.example.attempt.Repository.MemberRepository;
-import com.example.attempt.Repository.PlaceRepository;
+import com.example.attempt.repository.AttendRepository;
+import com.example.attempt.repository.MemberRepository;
+import com.example.attempt.repository.PlaceRepository;
 import com.example.attempt.domain.Attend;
 import com.example.attempt.domain.Member;
-import com.example.attempt.domain.Unit;
-import com.example.attempt.service.MemberService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;

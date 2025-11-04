@@ -1,6 +1,6 @@
 package com.example.attempt.controller;
 
-import com.example.attempt.Repository.PlaceRepository;
+import com.example.attempt.repository.PlaceRepository;
 import com.example.attempt.domain.Place;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

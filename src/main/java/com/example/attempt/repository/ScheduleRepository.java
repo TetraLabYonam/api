@@ -1,4 +1,4 @@
-package com.example.attempt.Repository;
+package com.example.attempt.repository;
 
 import com.example.attempt.domain.Schedule;
 import org.springframework.data.repository.CrudRepository;

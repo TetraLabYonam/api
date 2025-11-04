@@ -1,8 +1,7 @@
-package com.example.attempt.Repository;
+package com.example.attempt.repository;
 
 import com.example.attempt.domain.Member;
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
