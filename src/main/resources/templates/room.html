@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8">
+<h3>Room [[${roomId}]]</h3>
+<button id="btn">번호표 받기</button>
+<div id="out"></div>
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@2.3.0/dist/socket.io.js"></script>
+<script>
+    const roomId = '[[${roomId}]]';
+    const userKey = localStorage.getItem("userKey") || (crypto.randomUUID?.() || String(Date.now()));
+    localStorage.setItem("userKey", userKey);
+
+    const socket = io(`${location.hostname}:9092`, { path: '/socket.io', transports: ['websocket'] });
+
+    socket.on('connect', () => socket.emit('join', { roomId, userKey }));
+    socket.on('state', s => document.getElementById('out').innerText = `현재 마지막 번호: ${s.lastNumber} | 발급 인원: ${s.count}`);
+
+    document.getElementById('btn').onclick = () => {
+        socket.emit('issue', { roomId, userKey }, resp => {
+            if (resp?.error) alert(resp.error);
+            else alert(`내 번호: ${resp.number}`);
+        });
+    };
+</script>

@@ -1,11 +1,48 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Hello</title>
+    <title>Main Page</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .menu-item {
+            display: block;
+            padding: 15px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .menu-item:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-Hello
-<a href="/hello">hello</a>
+    <h1>메인 페이지</h1>
+    <div class="menu">
+        <a href="/map-excel" class="menu-item">Excel 관리</a>
+        <a href="/member" class="menu-item">회원 관리</a>
+        <a href="/schedule" class="menu-item">일정 관리</a>
+        <a href="/hello" class="menu-item">Hello</a>
+    </div>
 </body>
 </html>

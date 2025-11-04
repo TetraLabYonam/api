@@ -1,4 +1,10 @@
+server:
+  port: 8080
 spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
   datasource:
 #    url: jdbc:h2:tcp://localhost/~/jpashop
     url : jdbc:h2:mem:test
@@ -18,7 +24,21 @@ spring:
         format_sql: true
   logging.level:
     org.hibernate.SQL: debug
+  web:
+    cors:
+          mappings:
+            - path-pattern: /api/**
+              allowed-origins: "https://example.com,http://localhost:3000"
+              allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+              allowed-headers: "*"
+              allow-credentials: true
+
 # org.hibernate.type: trace #스프링 부트 2.x, hibernate5
 # org.hibernate.orm.jdbc.bind: trace #스프링 부트 3.x, hibernate6
 
 # Google Geocoding API Key는 application-API-KEY.properties 파일에서 관리됩니다.
+app:
+  socket:
+    host: 0.0.0.0
+    port: 9092
+    cors-origins: "https://example.com,http://localhost:3000"

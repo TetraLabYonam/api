@@ -26,8 +26,25 @@ public class MemberService {
         return memberRepository.findAll();
     }
 
-    public void update(Long id, String name){
+    public Member findOne(Long id) {
+        return memberRepository.find(id);
+    }
+
+    @Transactional
+    public void update(Long id, String username, String phoneNumber){
         Member member = memberRepository.find(id);
-        member.setUsername(name);
+        if (member != null) {
+            if (username != null) {
+                member.setUsername(username);
+            }
+            if (phoneNumber != null) {
+                member.setPhoneNumber(phoneNumber);
+            }
+        }
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        memberRepository.deleteById(id);
     }
 }

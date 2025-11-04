@@ -33,6 +33,15 @@ public class MemberRepository {
                 .getResultList();
     }
 
+    public void delete(Member member) {
+        em.remove(member);
+    }
 
+    public void deleteById(Long id) {
+        Member member = find(id);
+        if (member != null) {
+            em.remove(member);
+        }
+    }
 
 }

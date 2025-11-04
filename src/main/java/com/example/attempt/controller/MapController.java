@@ -1,13 +1,14 @@
 package com.example.attempt.controller;
 
+import com.example.attempt.service.ExcelService;
+import com.example.attempt.service.ExcelService.ExcelData;
 import com.google.maps.GeoApiContext;
 import com.google.maps.GeocodingApi;
 import com.google.maps.errors.ApiException;
 import com.google.maps.model.GeocodingResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,13 +18,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 
 @Controller
+@RequiredArgsConstructor
 public class MapController {
+
+    private final ExcelService excelService;
 
     @Value("${geocoding-api-key}")
     private String AUTH_TOKEN;
@@ -52,11 +55,21 @@ public class MapController {
         return "excel";
     }
 
+    @GetMapping("/member")
+    public String showMember() {
+        return "member";
+    }
+
+    @GetMapping("/schedule")
+    public String showSchedule() {
+        return "schedule";
+    }
+
     @PostMapping("/map-excel")
     public String showMapXls(@RequestParam("file") MultipartFile file, Model model) {
         try {
             // 엑셀 파일에서 사업단명과 주소 리스트 추출
-            List<AddressData> addressDataList = parseExcelFile(file);
+            List<ExcelData> addressDataList = excelService.parseExcelFile(file);
 
             // 주소를 위도/경도로 변환
             List<LocationDto> locations = getLocationsFromAddresses(addressDataList);
@@ -72,67 +85,9 @@ public class MapController {
         }
     }
 
-
-    // 엑셀 파일에서 사업단명과 주소 리스트를 추출하는 메소드
-    private List<AddressData> parseExcelFile(MultipartFile file) throws IOException {
-        List<AddressData> addressDataList = new ArrayList<>();
-
-        try (InputStream inputStream = file.getInputStream();
-             Workbook workbook = new XSSFWorkbook(inputStream)) {
-
-            Sheet sheet = workbook.getSheetAt(0); // 첫 번째 시트 사용
-
-            // 첫 번째 행을 제외하고 데이터 읽기 (헤더가 있다고 가정)
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row != null) {
-                    // 첫 번째 열: 사업단명
-                    Cell businessUnitCell = row.getCell(0);
-                    String businessUnit = getCellValueAsString(businessUnitCell);
-
-                    // 두 번째 열: 주소
-                    Cell addressCell = row.getCell(1);
-                    String address = getCellValueAsString(addressCell);
-
-                    if (address != null && !address.trim().isEmpty()) {
-                        addressDataList.add(new AddressData(
-                            businessUnit != null ? businessUnit.trim() : "",
-                            address.trim()
-                        ));
-                    }
-                }
-            }
-        }
-
-        return addressDataList;
-    }
-
-    // 셀 값을 문자열로 변환하는 헬퍼 메소드
-    private String getCellValueAsString(Cell cell) {
-        if (cell == null) {
-            return null;
-        }
-
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue();
-            case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue().toString();
-                } else {
-                    return String.valueOf((long) cell.getNumericCellValue());
-                }
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA:
-                return cell.getCellFormula();
-            default:
-                return null;
-        }
-    }
-
     // 사업단명과 주소 리스트를 위도/경도로 변환하는 메소드
-    private List<LocationDto> getLocationsFromAddresses(List<AddressData> addressDataList) {
+    //
+    private List<LocationDto> getLocationsFromAddresses(List<ExcelData> addressDataList) {
         List<LocationDto> locations = new ArrayList<>();
 
         GeoApiContext context = new GeoApiContext.Builder()
@@ -140,14 +95,16 @@ public class MapController {
                 .build();
 
         try {
-            for (AddressData addressData : addressDataList) {
+            for (ExcelData addressData : addressDataList) {
+                String unitName = addressData.getFirst();
+                String address = addressData.getSecond();
                 try {
-                    GeocodingResult[] response = GeocodingApi.geocode(context, addressData.getAddress()).await();
+                    GeocodingResult[] response = GeocodingApi.geocode(context, unitName).await();
 
                     if (response != null && response.length > 0) {
                         locations.add(new LocationDto(
-                                addressData.getBusinessUnit(),
-                                addressData.getAddress(),
+                                unitName,
+                                address,
                                 response[0].geometry.location.lat,
                                 response[0].geometry.location.lng
                         ));
@@ -157,7 +114,7 @@ public class MapController {
                     Thread.sleep(100);
                 } catch (Exception e) {
                     // 개별 주소 변환 실패시 로그만 남기고 계속 진행
-                    System.err.println("주소 변환 실패: " + addressData.getAddress() + " - " + e.getMessage());
+                    System.err.println("주소 변환 실패: " + address + " - " + e.getMessage());
                 }
             }
         } finally {
@@ -188,13 +145,6 @@ public class MapController {
 
         return locations;
 
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class AddressData {
-        private String businessUnit;  // 사업단명
-        private String address;       // 주소
     }
 
     @Data
