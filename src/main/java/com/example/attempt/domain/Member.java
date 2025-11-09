@@ -2,7 +2,9 @@ package com.example.attempt.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.*;
 
@@ -15,7 +17,8 @@ import java.util.*;
 @Entity
 @NoArgsConstructor
 @Table
-@Data
+@Getter
+@Setter
 public class Member {
 
     @Id @GeneratedValue

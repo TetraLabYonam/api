@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface TicketIssuanceRepository extends JpaRepository<TicketIssuance, Long> {
     Optional<TicketIssuance> findByRoomIdAndUserKey(Long roomId, String userKey);
+    Optional<TicketIssuance> findByRoomIdAndNumber(Long roomId, Integer number);
     long countByRoomId(Long roomId);
     void deleteByRoomId(Long roomId);
     java.util.List<TicketIssuance> findByRoomIdOrderByNumberAsc(Long roomId);

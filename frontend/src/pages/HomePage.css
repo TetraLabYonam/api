@@ -1,0 +1,42 @@
+.home-page {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.home-page h1 {
+  color: #333;
+  text-align: center;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.menu-item {
+  display: block;
+  padding: 15px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  text-align: center;
+  transition: background-color 0.3s;
+}
+
+.menu-item:hover {
+  background-color: #0056b3;
+}
+
+.menu-item.admin-link {
+  background-color: #dc3545;
+}
+
+.menu-item.admin-link:hover {
+  background-color: #c82333;
+}

@@ -21,7 +21,7 @@ import java.util.List;
 
 @RestController
 public class PlaceController {
-
+    // 모바일 앱을 위한 리소스 받기
     private final PlaceRepository placeRepository;
 
     public PlaceController(PlaceRepository placeRepository) {

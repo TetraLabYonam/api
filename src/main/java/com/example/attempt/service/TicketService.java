@@ -114,6 +114,13 @@ public class TicketService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public String getUserKeyByNumber(String roomUid, Integer number) {
+        Room r = roomRepository.findByRoomUid(roomUid).orElseThrow(() -> notFound(roomUid));
+        var issuance = tiRepo.findByRoomIdAndNumber(r.getId(), number);
+        return issuance.map(com.example.attempt.domain.TicketIssuance::getUserKey).orElse(null);
+    }
+
 
     private RuntimeException notFound(String uid){
         return new NoSuchElementException("room not found: " + uid);

@@ -1,7 +1,7 @@
 package com.example.attempt.controller;
 
 import com.example.attempt.service.ExcelService;
-import com.example.attempt.service.ExcelService.ExcelData;
+import com.example.attempt.service.ExcelService.placeExcelData;
 import com.google.maps.GeoApiContext;
 import com.google.maps.GeocodingApi;
 import com.google.maps.errors.ApiException;
@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -69,7 +70,7 @@ public class MapController {
     public String showMapXls(@RequestParam("file") MultipartFile file, Model model) {
         try {
             // 엑셀 파일에서 사업단명과 주소 리스트 추출
-            List<ExcelData> addressDataList = excelService.parseExcelFile(file);
+            List<placeExcelData> addressDataList = excelService.parsePlaceFile(file);
 
             // 주소를 위도/경도로 변환
             List<LocationDto> locations = getLocationsFromAddresses(addressDataList);
@@ -85,9 +86,25 @@ public class MapController {
         }
     }
 
+    // React 앱용 REST API 엔드포인트 (JSON 응답)
+    @PostMapping("/api/map-excel")
+    public ResponseEntity<?> uploadExcelFile(@RequestParam("file") MultipartFile file) {
+        try {
+            // 엑셀 파일에서 사업단명과 주소 리스트 추출
+            List<placeExcelData> addressDataList = excelService.parsePlaceFile(file);
+
+            // 주소를 위도/경도로 변환
+            List<LocationDto> locations = getLocationsFromAddresses(addressDataList);
+
+            return ResponseEntity.ok().body(new MapResponse(locations));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new ErrorResponse("파일 처리 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+
     // 사업단명과 주소 리스트를 위도/경도로 변환하는 메소드
     //
-    private List<LocationDto> getLocationsFromAddresses(List<ExcelData> addressDataList) {
+    private List<LocationDto> getLocationsFromAddresses(List<placeExcelData> addressDataList) {
         List<LocationDto> locations = new ArrayList<>();
 
         GeoApiContext context = new GeoApiContext.Builder()
@@ -95,9 +112,9 @@ public class MapController {
                 .build();
 
         try {
-            for (ExcelData addressData : addressDataList) {
-                String unitName = addressData.getFirst();
-                String address = addressData.getSecond();
+            for (placeExcelData addressData : addressDataList) {
+                String unitName = addressData.getPlaceName();
+                String address = addressData.getAddress();
                 try {
                     GeocodingResult[] response = GeocodingApi.geocode(context, unitName).await();
 
@@ -154,5 +171,18 @@ public class MapController {
         private String address;
         private double lat;
         private double lng;
+    }
+
+    // REST API 응답용 DTO
+    @Data
+    @AllArgsConstructor
+    private static class MapResponse {
+        private List<LocationDto> locations;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class ErrorResponse {
+        private String error;
     }
 }
