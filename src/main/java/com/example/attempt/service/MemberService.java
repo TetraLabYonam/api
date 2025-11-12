@@ -3,7 +3,6 @@ package com.example.attempt.service;
 import com.example.attempt.domain.Unit;
 import com.example.attempt.repository.MemberRepository;
 import com.example.attempt.domain.Member;
-import com.example.attempt.repository.UnitRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -15,11 +14,9 @@ import static com.example.attempt.service.ExcelService.*;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final UnitRepository unitRepository;
 
-    public MemberService(MemberRepository memberRepository, UnitRepository unitRepository) {
+    public MemberService(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
-        this.unitRepository = unitRepository;
     }
 
     @Transactional
@@ -60,12 +57,8 @@ public class MemberService {
 
         for (memberExcelData data : memberDataList) {
             try {
-                // Unit 찾기 또는 생성
-                Unit unit = unitRepository.findByName(data.getUnitName())
-                        .orElseGet(() -> {
-                            Unit newUnit = new Unit(data.getUnitName());
-                            return unitRepository.save(newUnit);
-                        });
+                // Unit 생성 (임베디드 타입)
+                Unit unit = new Unit(data.getUnitName());
 
                 // Member 생성 및 저장
                 Member member = new Member(data.getMemberName(), data.getPhoneNumber());

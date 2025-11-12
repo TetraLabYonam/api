@@ -30,7 +30,7 @@ public class Member {
     @OneToMany(mappedBy = "member")
     private List<Attend> attends = new ArrayList<>();
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @Embedded
     private Unit unit;
 
     public Member(String username, String phoneNumber) {

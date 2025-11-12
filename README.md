@@ -1,50 +1,113 @@
-# Attendance Management System
+# Attendance Management & Ticket System
 
-출석 관리 및 장소 기반 서비스를 제공하는 Spring Boot 애플리케이션입니다.
+출석 관리, 장소 기반 서비스, 실시간 번호표 시스템을 제공하는 풀스택 웹 애플리케이션입니다.
 
-## 주요 기능
+## 📋 목차
 
-- 회원 관리 (Member)
-- 장소(Place) 정보 관리 및 좌표 변환
-- 스케줄 및 출석(Attend) 관리
-- 엑셀 파일에서 주소 데이터 읽기
-- Google Geocoding API를 통한 주소 → 좌표 변환
-- 외부 웹사이트 스크래핑을 통한 장소 정보 수집
+- [사용자 가이드](#사용자-가이드)
+- [주요 기능](#주요-기능)
+- [기술 스택](#기술-스택)
+- [시작하기](#시작하기)
+- [프로젝트 구조](#프로젝트-구조)
+- [API 엔드포인트](#api-엔드포인트)
+- [데이터베이스 구조](#데이터베이스-구조)
+- [개발 가이드](#개발-가이드)
 
-## 기술 스택
+## 📖 사용자 가이드
 
+### 관리자 및 담당자를 위한 가이드
+
+이 시스템은 노인 일자리 사업 참여자를 관리하는 담당자를 위한 도구입니다.
+
+- **🚀 [빠른 시작 가이드](./QUICK_START.md)** - 5분 만에 시작하기
+  - 처음 사용하시는 분들을 위한 간단한 시작 가이드
+  - 단계별 스크린샷과 함께 제공
+  - 가장 많이 사용하는 기능 위주로 설명
+
+- **📚 [상세 사용자 가이드](./USER_GUIDE.md)** - 전체 기능 안내
+  - 모든 기능에 대한 상세한 설명
+  - FAQ (자주 묻는 질문)
+  - 문제 해결 방법
+  - 용어 설명
+
+### 개발자를 위한 문서
+
+- **🗄️ [데이터베이스 다이어그램](./DATABASE_DIAGRAMS.md)** - ER 다이어그램 및 시스템 구조
+
+## ✨ 주요 기능
+
+### 1. 회원 관리 시스템
+- **Excel 업로드**: 회원 정보(이름, 전화번호, 사업단)를 Excel 파일로 일괄 업로드
+- **자동 Unit 생성**: 사업단이 없으면 자동으로 생성하여 연결
+- **회원 CRUD**: RESTful API를 통한 회원 정보 관리
+- **데이터 검증**: 파일 형식 및 데이터 유효성 검증
+
+### 2. 장소 관리 시스템
+- **Excel 기반 장소 등록**: 주소가 포함된 Excel 파일 업로드
+- **자동 Geocoding**: Google Maps API를 통한 주소 → 좌표 자동 변환
+- **지도 시각화**: Google Maps로 여러 장소를 마커로 표시
+- **일괄 저장**: 변환된 장소 정보를 데이터베이스에 일괄 저장
+
+### 3. 실시간 번호표 시스템
+- **WebSocket 통신**: 실시간 양방향 통신으로 즉각적인 상태 업데이트
+- **방 관리**: 여러 대기실(Room) 생성 및 관리
+- **자동 번호 발급**: 사용자별 고유 번호표 자동 발급
+- **중복 방지**: 한 방에서 한 사용자당 하나의 번호표만 발급
+- **현재 번호 관리**: 관리자가 현재 호출 번호 업데이트
+- **실시간 동기화**: 모든 참여자에게 실시간으로 상태 전파
+
+### 4. 출석 관리
+- **위치 기반 출석**: GPS 좌표를 활용한 출석 체크
+- **스케줄 관리**: 장소별 출석 일정 관리
+- **출석 기록**: 회원별 출석 이력 추적
+
+## 🛠 기술 스택
+
+### Backend
 - **Framework**: Spring Boot 3.5.6
 - **Language**: Java 17
 - **Database**: H2 (In-Memory)
 - **ORM**: JPA / Hibernate 6
-- **Template Engine**: Thymeleaf
+- **Real-time**: WebSocket (STOMP)
 - **Build Tool**: Gradle
-- **External APIs**: Google Maps Geocoding API
 - **Libraries**:
-  - Apache POI (엑셀 처리)
+  - Apache POI (Excel 처리)
   - Jsoup (웹 스크래핑)
-  - Lombok
+  - Lombok (코드 간소화)
   - p6spy (SQL 로깅)
 
-## 시작하기
+### Frontend
+- **Framework**: React 18
+- **Build Tool**: Vite
+- **Routing**: React Router v6
+- **Styling**: CSS Modules
+- **HTTP Client**: Axios
+- **Real-time**: Socket.IO Client (WebSocket)
+- **Maps**: Google Maps React
+
+### External APIs
+- Google Maps Geocoding API
+- Google Maps JavaScript API
+
+## 🚀 시작하기
 
 ### 사전 요구사항
 
 - Java 17 이상
-- Google Cloud Platform 계정 (Geocoding API 키 필요)
+- Node.js 18 이상
+- npm 또는 yarn
+- Google Cloud Platform 계정 (Maps API 키 필요)
 
 ### 설정
 
 #### 1. 저장소 클론
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/TetraLabYonam/api.git
 cd attempt
 ```
 
 #### 2. Google API 키 설정
-
-**중요**: 애플리케이션 실행 전 반드시 Google Geocoding API 키를 설정해야 합니다.
 
 ##### Google Cloud Console에서 API 키 발급
 
@@ -52,119 +115,261 @@ cd attempt
 2. 프로젝트 생성 또는 기존 프로젝트 선택
 3. 좌측 메뉴에서 "API 및 서비스" > "사용자 인증 정보" 클릭
 4. "사용자 인증 정보 만들기" > "API 키" 선택
-5. [Geocoding API 활성화](https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com)
+5. 다음 API들을 활성화:
+   - [Geocoding API](https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com)
+   - [Maps JavaScript API](https://console.cloud.google.com/apis/library/maps-backend.googleapis.com)
 6. 발급받은 API 키 복사
 
-##### 설정 파일 생성
+##### 백엔드 설정 파일 생성
 
 ```bash
-# 예제 파일을 복사하여 설정 파일 생성
 cd src/main/resources
 cp application-API-KEY.properties.example application-API-KEY.properties
 ```
 
-`application-API-KEY.properties` 파일을 열고 발급받은 API 키로 수정:
+`application-API-KEY.properties` 파일을 열고 API 키 입력:
 
 ```properties
 geocoding-api-key=YOUR_GOOGLE_GEOCODING_API_KEY_HERE
 ```
 
-> **참고**: `application-API-KEY.properties` 파일은 `.gitignore`에 포함되어 Git에 커밋되지 않습니다.
+##### 프론트엔드 환경 변수 설정
+
+```bash
+cd frontend
+cp .env.example .env.development
+```
+
+`.env.development` 파일을 열고 설정:
+
+```env
+VITE_API_URL=http://localhost:8080
+VITE_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY_HERE
+```
+
+> **보안**: `.env.*` 파일과 `application-API-KEY.properties`는 `.gitignore`에 포함되어 Git에 커밋되지 않습니다.
 
 ### 실행
 
-#### Gradle로 실행
+#### 백엔드 실행
 
 ```bash
 # 프로젝트 루트 디렉토리에서
 ./gradlew bootRun
 ```
 
-#### IDE에서 실행
-
-1. IntelliJ IDEA 또는 Eclipse에서 프로젝트 열기
+또는 IDE에서:
+1. IntelliJ IDEA에서 프로젝트 열기
 2. `AttemptApplication.java` 파일의 `main` 메서드 실행
+
+#### 프론트엔드 실행
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ### 접속
 
-애플리케이션이 시작되면 다음 URL로 접속할 수 있습니다:
-
-- 기본 URL: `http://localhost:8080`
-- H2 Console: `http://localhost:8080/h2-console`
+- **프론트엔드**: `http://localhost:5173`
+- **백엔드 API**: `http://localhost:8080`
+- **H2 Console**: `http://localhost:8080/h2-console`
   - JDBC URL: `jdbc:h2:mem:test`
   - Username: `sa`
   - Password: (비어있음)
 
-## API 엔드포인트
+## 📁 프로젝트 구조
 
-### Member API
+```
+attempt/
+├── src/main/java/com/example/attempt/
+│   ├── config/                    # 설정 파일
+│   │   └── WebSocketConfig.java  # WebSocket 설정
+│   ├── controller/                # REST & WebSocket 컨트롤러
+│   │   ├── MemberController.java
+│   │   ├── MapController.java
+│   │   ├── PlaceController.java
+│   │   └── websocket/
+│   │       └── WebSocketController.java
+│   ├── domain/                    # JPA 엔티티
+│   │   ├── Member.java
+│   │   ├── Unit.java
+│   │   ├── Attend.java
+│   │   ├── Schedule.java
+│   │   ├── Place.java
+│   │   ├── Room.java
+│   │   └── TicketIssuance.java
+│   ├── repository/                # 데이터 접근 계층
+│   │   ├── MemberRepository.java
+│   │   ├── UnitRepository.java
+│   │   ├── PlaceRepository.java
+│   │   ├── RoomRepository.java
+│   │   └── TicketIssuanceRepository.java
+│   └── service/                   # 비즈니스 로직
+│       ├── MemberService.java
+│       ├── ExcelService.java
+│       └── TicketService.java
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/            # React 컴포넌트
+│   │   │   ├── Layout/
+│   │   │   └── common/
+│   │   ├── pages/                 # 페이지 컴포넌트
+│   │   │   ├── HomePage.jsx
+│   │   │   ├── MemberXlsPage.jsx  # 회원 Excel 업로드
+│   │   │   ├── ExcelMapPage.jsx   # 장소 Excel 업로드 & 지도
+│   │   │   ├── RoomPage.jsx       # 번호표 시스템
+│   │   │   └── AdminPage.jsx      # 방 관리 (관리자)
+│   │   ├── services/              # API 서비스
+│   │   │   ├── api.js
+│   │   │   ├── socketService.js
+│   │   │   └── roomService.js
+│   │   ├── contexts/              # React Context
+│   │   │   └── SocketContext.jsx
+│   │   └── stores/                # 상태 관리
+│   │       ├── roomStore.js
+│   │       └── userStore.js
+│   └── package.json
+│
+└── DATABASE_DIAGRAMS.md           # 데이터베이스 다이어그램 문서
+```
 
-- `GET /api/v1/member` - 회원 목록 조회 (테스트용)
+## 🔌 API 엔드포인트
 
-### Place API
+### Member API (`/api/v1/member`)
 
-- `GET /api/place` - 외부 사이트에서 장소 정보 스크래핑
-- `POST /api/place/save` - 단일 장소 저장
-- `POST /api/place/save-all` - 다수 장소 일괄 저장
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/` | 회원 생성 |
+| GET | `/` | 전체 회원 조회 |
+| GET | `/{id}` | 특정 회원 조회 |
+| PUT | `/{id}` | 회원 정보 수정 |
+| DELETE | `/{id}` | 회원 삭제 |
+| POST | `/member-excel` | Excel 파일 업로드 및 파싱 |
+| POST | `/save-members` | 파싱된 회원 데이터 DB 저장 |
+
+### Place API (`/api/place`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | 외부 사이트 장소 스크래핑 |
+| POST | `/save` | 단일 장소 저장 |
+| POST | `/save-all` | 다수 장소 일괄 저장 |
 
 ### Map API
 
-- `GET /mapV1` - 지도 뷰 (단일 위치)
-- `GET /map-excel` - 엑셀 업로드 페이지
-- `POST /map-excel` - 엑셀 파일에서 주소 추출 및 좌표 변환
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/mapV1` | 지도 뷰 (단일 위치) |
+| GET | `/map-excel` | Excel 업로드 페이지 |
+| POST | `/api/map-excel` | Excel 파일에서 주소 추출 및 좌표 변환 |
 
-## 디렉토리 구조
+### WebSocket Endpoints
 
+| Destination | Description |
+|------------|-------------|
+| `/app/join-room` | 방 입장 및 번호표 발급 |
+| `/app/update-current-number` | 현재 호출 번호 업데이트 (관리자) |
+| `/topic/room/{roomUid}` | 방 상태 구독 (클라이언트) |
+
+## 🗄️ 데이터베이스 구조
+
+상세한 ER 다이어그램과 ORM 클래스 다이어그램은 [DATABASE_DIAGRAMS.md](./DATABASE_DIAGRAMS.md)를 참고하세요.
+
+### 주요 엔티티
+
+#### 회원 관리
+- **Member**: 회원 정보 (이름, 전화번호)
+- **Unit**: 사업단 정보
+
+#### 출석 관리
+- **Attend**: 출석 기록 (위치 정보 포함)
+- **Schedule**: 일정 정보
+- **Place**: 장소 정보 (주소, 좌표)
+
+#### 번호표 시스템
+- **Room**: 대기실 정보
+- **TicketIssuance**: 번호표 발급 기록
+
+### 주요 관계
+
+```mermaid
+erDiagram
+    MEMBER ||--o| UNIT : "belongs to"
+    MEMBER ||--o{ ATTEND : "has many"
+    ATTEND }o--|| SCHEDULE : "for"
+    SCHEDULE }o--|| PLACE : "at"
+    ROOM ||--o{ TICKET_ISSUANCE : "issues"
 ```
-src/main/java/com/example/attempt/
-├── controller/          # REST 컨트롤러
-│   ├── AttendController.java
-│   ├── HelloController.java
-│   ├── MapController.java
-│   ├── MemberController.java
-│   └── PlaceController.java
-├── domain/              # JPA 엔티티
-│   ├── Attend.java
-│   ├── Member.java
-│   ├── Place.java
-│   ├── Schedule.java
-│   └── Unit.java
-├── Repository/          # 데이터 접근 계층
-│   ├── AttendRepository.java
-│   ├── MemberRepository.java
-│   ├── PlaceRepository.java
-│   ├── ScheduleRepository.java
-│   └── UnitRepository.java
-└── service/             # 비즈니스 로직
-    └── MemberService.java
-```
 
-## 보안 주의사항
+## 💻 개발 가이드
 
-- **API 키 관리**: 절대로 API 키를 Git에 커밋하지 마세요
-- **프로덕션 배포**:
-  - H2 콘솔 비활성화 (`spring.h2.console.enabled=false`)
-  - `ddl-auto`를 `validate`로 변경
-  - 실제 데이터베이스(MySQL, PostgreSQL 등) 사용 권장
-
-## 개발 환경
-
-### 테스트 실행
+### 백엔드 테스트
 
 ```bash
 ./gradlew test
 ```
 
-### 빌드
+### 백엔드 빌드
 
 ```bash
 ./gradlew build
 ```
 
-## 라이선스
+### 프론트엔드 빌드
+
+```bash
+cd frontend
+npm run build
+```
+
+### 코드 스타일
+
+- **Backend**: Java 코드 컨벤션 준수
+- **Frontend**: ESLint 설정 사용
+
+### Git 커밋 메시지 컨벤션
+
+```
+FEAT: 새로운 기능 추가
+FIX: 버그 수정
+REFACT: 코드 리팩토링
+DOCS: 문서 수정
+TEST: 테스트 코드 추가/수정
+SECURITY: 보안 관련 수정
+```
+
+## 🔒 보안 주의사항
+
+- **API 키 관리**:
+  - 절대로 API 키를 Git에 커밋하지 마세요
+  - `.env` 파일과 `application-API-KEY.properties`는 `.gitignore`에 포함됨
+
+- **프로덕션 배포**:
+  - H2 콘솔 비활성화 (`spring.h2.console.enabled=false`)
+  - `ddl-auto`를 `validate`로 변경
+  - 실제 데이터베이스(MySQL, PostgreSQL 등) 사용 권장
+  - WebSocket CORS 설정 검토
+  - 환경 변수로 민감한 정보 관리
+
+## 📝 주요 변경 이력
+
+- **2025-11**: React 프론트엔드 마이그레이션, 회원 Excel 업로드 기능 추가
+- **2025-11**: Socket.io → WebSocket(STOMP) 마이그레이션
+- **2025-11**: 번호표 시스템 구현
+- **2025-11**: Excel 기반 장소 관리 기능 구현
+- **2025-11**: Google Maps API 통합
+
+## 📄 라이선스
 
 이 프로젝트는 개인 학습/개발 목적으로 작성되었습니다.
 
-## 문의
+## 📧 문의
 
-프로젝트 관련 문의사항은 이슈를 등록해주세요.
+프로젝트 관련 문의사항은 [GitHub Issues](https://github.com/TetraLabYonam/api/issues)를 통해 등록해주세요.
+
+---
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
