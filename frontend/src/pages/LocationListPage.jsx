@@ -30,8 +30,8 @@ const LocationListPage = () => {
 
     // 검색 필터링
     const filteredLocations = locations.filter(location =>
-        location.businessUnit.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        location.address.toLowerCase().includes(searchTerm.toLowerCase())
+        (location.business_unit || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (location.address || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleViewOnMap = (location) => {
@@ -78,19 +78,29 @@ const LocationListPage = () => {
                 ) : (
                     <div className="locations-grid">
                         {filteredLocations.map((location, index) => (
-                            <div key={location.id} className="location-card">
+                            <div key={index} className="location-card">
                                 <div className="location-header">
                                     <h4 className="location-title">
-                                        {index + 1}. {location.businessUnit}
+                                        {index + 1}. {location.business_unit || '이름 없음'}
                                     </h4>
                                 </div>
                                 <div className="location-content">
                                     <div className="location-address">
-                                        📍 {location.address}
+                                        📍 {location.address || '-'}
                                     </div>
                                     <div className="location-coords">
-                                        🌐 위도: {location.lat?.toFixed(6)}, 경도: {location.lng?.toFixed(6)}
+                                        🌐 위도: {location.lat?.toFixed(6) || '-'}, 경도: {location.lng?.toFixed(6) || '-'}
                                     </div>
+                                    {location.phone_number && (
+                                        <div className="location-phone">
+                                            📞 {location.phone_number}
+                                        </div>
+                                    )}
+                                    {location.description && (
+                                        <div className="location-description">
+                                            📝 {location.description}
+                                        </div>
+                                    )}
                                     <button
                                         className="map-btn"
                                         onClick={() => handleViewOnMap(location)}
