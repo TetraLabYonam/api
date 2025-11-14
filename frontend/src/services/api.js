@@ -38,7 +38,7 @@ export const getLocationData = async () => {
     // 백엔드에 REST API 엔드포인트가 있다면 사용
     // 예: const response = await apiClient.get('/api/map/location');
     // return response.data;
-    
+
     // 현재는 URL 파라미터를 사용하므로 null 반환
     // 백엔드에 REST API 엔드포인트를 추가하면 위 주석을 해제하고 사용
     return null;
@@ -70,7 +70,7 @@ export const uploadExcelFile = async (file) => {
     if (response.data && response.data.locations) {
       return response.data;
     }
-    
+
     throw new Error('응답 형식이 올바르지 않습니다.');
   } catch (error) {
     console.error('Excel 파일 업로드 실패:', error);
@@ -134,6 +134,28 @@ export const saveMembersToDb = async (members) => {
     return response.data;
   } catch (error) {
     console.error('회원 정보 저장 실패:', error);
+    throw error;
+  }
+};
+
+// 회원 목록 조회
+export const getMembers = async () => {
+  try {
+    const response = await apiClient.get('/api/v1/member/members');
+    return response.data;
+  } catch (error) {
+    console.error('회원 목록 조회 실패:', error);
+    throw error;
+  }
+};
+
+// 위치 목록 조회
+export const getPlaces = async () => {
+  try {
+    const response = await apiClient.get('/api/place/places');
+    return response.data;
+  } catch (error) {
+    console.error('위치 목록 조회 실패:', error);
     throw error;
   }
 };

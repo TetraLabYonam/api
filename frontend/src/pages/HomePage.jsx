@@ -4,8 +4,8 @@ const HomePage = () => {
   return (
     <div className="dashboard">
       <div className="welcome-section">
-        <h2>환영합니다! 👋</h2>
-        <p>연암공과대학교 관리 시스템에 오신 것을 환영합니다.</p>
+        <h2>환영합니다!</h2>
+        <p>S:Link 시스템에 오신 것을 환영합니다.</p>
       </div>
 
       <div className="dashboard-grid">
