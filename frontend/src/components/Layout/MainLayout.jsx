@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import './MainLayout.css';
+import slinkLogo from '../../assets/slinkLogo.png';
 
 const MainLayout = () => {
   const location = useLocation();
@@ -22,8 +23,7 @@ const MainLayout = () => {
       <header className="header">
         <div className="header-left">
           <Link to="/" className="logo">
-            <span className="logo-icon">🎓</span>
-            <span className="logo-text">S:Link</span>
+            <img src={slinkLogo} alt="S:Link Logo" className="logo-image" />
           </Link>
         </div>
         <div className="header-right">
