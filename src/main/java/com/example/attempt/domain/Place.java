@@ -29,12 +29,39 @@ public class Place {
     private Double latitude;
     private Double longitude;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "description", length = 1000)
+    private String description;
+
 
     public Place(String name, String address, Double latitude, Double longitude) {
         this.name = name;
         this.address = address;
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    public Place(String name, String address, Double latitude, Double longitude, String imageUrl) {
+        this.name = name;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.imageUrl = imageUrl;
+    }
+
+    public Place(String name, String address, Double latitude, Double longitude, String imageUrl, String phoneNumber, String description) {
+        this.name = name;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.imageUrl = imageUrl;
+        this.phoneNumber = phoneNumber;
+        this.description = description;
     }
 
 }

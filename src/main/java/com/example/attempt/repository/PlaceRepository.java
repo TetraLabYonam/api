@@ -1,7 +1,7 @@
 package com.example.attempt.repository;
 
 import com.example.attempt.domain.Place;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface PlaceRepository extends CrudRepository<Place, Long> {
+public interface PlaceRepository extends JpaRepository<Place, Long> {
 }
