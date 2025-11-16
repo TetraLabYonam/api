@@ -19,7 +19,7 @@
 
 이 시스템은 노인 일자리 사업 참여자를 관리하는 담당자를 위한 도구입니다.
 
-- **🚀 [빠른 시작 가이드](./QUICK_START.md)** - 5분 만에 시작하기
+- **🚀 [빠른 시작 가이드](src/main/resources/markDown/QUICK_START.md)** - 5분 만에 시작하기
   - 처음 사용하시는 분들을 위한 간단한 시작 가이드
   - 단계별 스크린샷과 함께 제공
   - 가장 많이 사용하는 기능 위주로 설명
@@ -32,7 +32,7 @@
 
 ### 개발자를 위한 문서
 
-- **🗄️ [데이터베이스 다이어그램](./DATABASE_DIAGRAMS.md)** - ER 다이어그램 및 시스템 구조
+- **🗄️ [데이터베이스 다이어그램](src/main/resources/markDown/DATABASE_DIAGRAMS.md)** - ER 다이어그램 및 시스템 구조
 
 ## ✨ 주요 기능
 
@@ -276,7 +276,7 @@ attempt/
 
 ## 🗄️ 데이터베이스 구조
 
-상세한 ER 다이어그램과 ORM 클래스 다이어그램은 [DATABASE_DIAGRAMS.md](./DATABASE_DIAGRAMS.md)를 참고하세요.
+상세한 ER 다이어그램과 ORM 클래스 다이어그램은 [DATABASE_DIAGRAMS.md](src/main/resources/markDown/DATABASE_DIAGRAMS.md)를 참고하세요.
 
 ### 주요 엔티티
 

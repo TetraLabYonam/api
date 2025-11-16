@@ -43,6 +43,9 @@ public class PlaceController {
     @PostMapping("/api/place/save-all")
     public ResponseEntity<String> savePlaces(@RequestBody List<LocationDto> locationDtos) {
         try {
+            // 기존 데이터 모두 삭제 (테이블 초기화)
+            placeRepository.deleteAll();
+
             List<Place> places = new ArrayList<>();
             for (LocationDto dto : locationDtos) {
                 Place place = new Place(
