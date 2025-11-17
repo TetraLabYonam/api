@@ -7,12 +7,13 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+/**
+ * WebSocket 설정 클래스
+ * 번호표 실시간 업데이트를 위한 WebSocket 통신 설정
+ */
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
-    @Value("${app.socket.cors-origins}")
-    private String corsOrigins;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -25,8 +26,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // WebSocket 엔드포인트 등록
-        registry.addEndpoint("/ws")
-                .setAllowedOrigins(corsOrigins.split(","))
+        // Flutter 앱과 실시간 통신을 위한 엔드포인트
+        registry.addEndpoint("/ws/queue")
+                .setAllowedOriginPatterns("*")  // 모든 출처 허용 (모바일 앱 대응)
                 .withSockJS();  // SockJS fallback 지원
     }
 }

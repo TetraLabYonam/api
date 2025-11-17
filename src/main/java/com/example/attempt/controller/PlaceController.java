@@ -1,212 +1,82 @@
 package com.example.attempt.controller;
 
-import com.example.attempt.repository.PlaceRepository;
-import com.example.attempt.domain.Place;
+import com.example.attempt.dto.AddressDto;
+import com.example.attempt.dto.PlaceDto;
+import com.example.attempt.service.PlaceService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 일자리(장소) 관련 REST API 컨트롤러
+ * Flutter 앱과 통신하는 엔드포인트 제공
+ */
+@Slf4j
 @RestController
+@RequestMapping("/api/place")
+@RequiredArgsConstructor
 public class PlaceController {
-    private final PlaceRepository placeRepository;
 
-    public PlaceController(PlaceRepository placeRepository) {
-        this.placeRepository = placeRepository;
+    private final PlaceService placeService;
+
+    /**
+     * 단일 장소 저장
+     * POST /api/place/save
+     *
+     * @param placeDto 저장할 장소 정보
+     * @return 성공 메시지
+     */
+    @PostMapping("/save")
+    public ResponseEntity<String> savePlace(@RequestBody PlaceDto placeDto) {
+        log.info("장소 저장 요청 - name: {}", placeDto.getBusiness_unit());
+        placeService.savePlace(placeDto);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("장소가 성공적으로 저장되었습니다.");
     }
 
-    @PostMapping("/api/place/save")
-    public ResponseEntity<String> savePlace(@RequestBody LocationDto locationDto) {
-        try {
-            Place place = new Place(
-                    locationDto.getBusiness_unit(),
-                    locationDto.getAddress(),
-                    locationDto.getLat(),
-                    locationDto.getLng(),
-                    null, // imageUrl
-                    locationDto.getPhone_number(),
-                    locationDto.getDescription()
-            );
-            placeRepository.save(place);
-            return ResponseEntity.ok("장소가 성공적으로 저장되었습니다.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("장소 저장 중 오류가 발생했습니다: " + e.getMessage());
-        }
+    /**
+     * 여러 장소 일괄 저장
+     * POST /api/place/save-all
+     *
+     * @param placeDtoList 저장할 장소 목록
+     * @return 성공 메시지
+     */
+    @PostMapping("/save-all")
+    public ResponseEntity<String> savePlaces(@RequestBody List<PlaceDto> placeDtoList) {
+        log.info("장소 일괄 저장 요청 - count: {}", placeDtoList.size());
+        int savedCount = placeService.savePlaces(placeDtoList);
+        return ResponseEntity.ok(savedCount + "개의 장소가 성공적으로 저장되었습니다.");
     }
 
-    @PostMapping("/api/place/save-all")
-    public ResponseEntity<String> savePlaces(@RequestBody List<LocationDto> locationDtos) {
-        try {
-            // 기존 데이터 모두 삭제 (테이블 초기화)
-            placeRepository.deleteAll();
-
-            List<Place> places = new ArrayList<>();
-            for (LocationDto dto : locationDtos) {
-                Place place = new Place(
-                        dto.getBusiness_unit(),
-                        dto.getAddress(),
-                        dto.getLat(),
-                        dto.getLng(),
-                        null, // imageUrl
-                        dto.getPhone_number(),
-                        dto.getDescription()
-                );
-                places.add(place);
-            }
-            placeRepository.saveAll(places);
-            return ResponseEntity.ok(places.size() + "개의 장소가 성공적으로 저장되었습니다.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("장소 저장 중 오류가 발생했습니다: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/api/place")
+    /**
+     * 장소 목록 조회 (간단)
+     * GET /api/place
+     *
+     * @return 주소 DTO 목록 (이미지 URL, 이름만)
+     */
+    @GetMapping
     public ResponseEntity<List<AddressDto>> getPlace() {
-        try {
-            List<Place> places = placeRepository.findAll();
-            List<AddressDto> results = new ArrayList<>();
-
-            for (Place place : places) {
-                results.add(new AddressDto(
-                    place.getImageUrl() != null ? place.getImageUrl() : "",
-                    place.getName() != null ? place.getName() : ""
-                ));
-            }
-
-            return ResponseEntity.ok(results);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
-        }
+        log.info("장소 목록 조회 요청 (간단)");
+        List<AddressDto> places = placeService.getPlaces();
+        return ResponseEntity.ok(places);
     }
 
-    @GetMapping("/api/place/list")
-    public ResponseEntity<List<LocationDto>> getPlaceList() {
-        try {
-            List<Place> places = placeRepository.findAll();
-            List<LocationDto> results = new ArrayList<>();
-
-            for (Place place : places) {
-                results.add(new LocationDto(
-                    place.getName() != null ? place.getName() : "",
-                    place.getAddress() != null ? place.getAddress() : "",
-                    place.getLatitude(),
-                    place.getLongitude(),
-                    place.getPhoneNumber(),
-                    place.getDescription()
-                ));
-            }
-
-            return ResponseEntity.ok(results);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
-        }
-    }
-
-
-
-    // LocationDto: Flutter JobPlace 모델과 매핑
-    public static class LocationDto {
-        private String business_unit;  // 사업단명
-        private String address;
-        private Double lat;
-        private Double lng;
-        private String phone_number;
-        private String description;
-
-        public LocationDto() {}
-
-        public LocationDto(String business_unit, String address, Double lat, Double lng) {
-            this.business_unit = business_unit;
-            this.address = address;
-            this.lat = lat;
-            this.lng = lng;
-        }
-
-        public LocationDto(String business_unit, String address, Double lat, Double lng, String phone_number, String description) {
-            this.business_unit = business_unit;
-            this.address = address;
-            this.lat = lat;
-            this.lng = lng;
-            this.phone_number = phone_number;
-            this.description = description;
-        }
-
-        public String getBusiness_unit() {
-            return business_unit;
-        }
-
-        public void setBusiness_unit(String business_unit) {
-            this.business_unit = business_unit;
-        }
-
-        // Deprecated: 하위 호환성을 위해 유지
-        public String getBusinessUnit() {
-            return business_unit;
-        }
-
-        public void setBusinessUnit(String businessUnit) {
-            this.business_unit = businessUnit;
-        }
-
-        public String getAddress() {
-            return address;
-        }
-
-        public void setAddress(String address) {
-            this.address = address;
-        }
-
-        public Double getLat() {
-            return lat;
-        }
-
-        public void setLat(Double lat) {
-            this.lat = lat;
-        }
-
-        public Double getLng() {
-            return lng;
-        }
-
-        public void setLng(Double lng) {
-            this.lng = lng;
-        }
-
-        public String getPhone_number() {
-            return phone_number;
-        }
-
-        public void setPhone_number(String phone_number) {
-            this.phone_number = phone_number;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-    }
-
-    // 요청한 JSON 키와 동일하게 맞춤
-    public static class AddressDto {
-        public String image_url;
-        public String text;
-
-        public AddressDto(String image_url, String text) {
-            this.image_url = image_url;
-            this.text = text;
-        }
-
-        public AddressDto() {}
+    /**
+     * 장소 목록 조회 (상세)
+     * GET /api/place/list
+     *
+     * @return 장소 DTO 목록 (전체 정보)
+     */
+    @GetMapping("/list")
+    public ResponseEntity<List<PlaceDto>> getPlaceList() {
+        log.info("장소 목록 조회 요청 (상세)");
+        List<PlaceDto> places = placeService.getPlaceList();
+        return ResponseEntity.ok(places);
     }
 }
 
