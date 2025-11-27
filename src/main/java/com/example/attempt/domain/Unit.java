@@ -13,20 +13,13 @@ import lombok.Setter;
 public class Unit {
 
     @Column(name = "UNIT_NAME")
-    private String name;
+    private String unitName;
 
     @Column(name = "UNIT_TYPE")
-    private String type;
+    private String unitType;
 
-    public Unit(String name) {
-        this.name = name;
-    }
-
-    private void setName(String name) {
-        this.name = name;
-    }
-
-    private void setType(String type) {
-        this.type = type;
+    public Unit(String unitName) {
+        this.unitName = unitName;
     }
 }
+

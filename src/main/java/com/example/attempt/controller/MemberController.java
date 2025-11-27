@@ -1,17 +1,20 @@
 package com.example.attempt.controller;
 
 import com.example.attempt.domain.Member;
+import com.example.attempt.dto.member.*;
 import com.example.attempt.service.ExcelService;
 import com.example.attempt.service.MemberService;
-import lombok.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import lombok.Data;
+import lombok.AllArgsConstructor;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static com.example.attempt.service.ExcelService.*;
+import static com.example.attempt.service.ExcelService.memberExcelData;
 
 @RestController
 @RequestMapping("/api/v1/member")
@@ -21,115 +24,115 @@ public class MemberController {
     private final MemberService memberService;
     private final ExcelService excelService;
 
-    // CREATE - 회원 등록
+    /** CREATE */
     @PostMapping
-    public ResponseEntity<Member> createMember(@RequestBody Member member){
-        Long memberId = memberService.join(member);
-        Member savedMember = memberService.findOne(memberId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedMember);
+    public ResponseEntity<CreateMemberResponse> create(@RequestBody CreateMemberRequest request) {
+
+        Long id = memberService.create(
+                request.getUsername(),
+                request.getPhoneNumber(),
+                request.getUnitName()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new CreateMemberResponse(id, request.getUsername()));
     }
 
-    // READ - 전체 회원 조회
+    /** READ - 전체 조회 */
     @GetMapping
-    public ResponseEntity<List<Member>> getAllMembers(){
-        List<Member> members = memberService.findMembers();
-        return ResponseEntity.ok(members);
+    public ResponseEntity<List<MemberDto>> all() {
+        List<Member> members = memberService.findAll();
+
+        List<MemberDto> result = members.stream()
+                .map(m -> new MemberDto(
+                        m.getId(),
+                        m.getUsername(),
+                        m.getPhoneNumber(),
+                        m.getUnit() != null ? m.getUnit().getUnitName() : null
+                )).collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
     }
 
-    // READ - 단건 회원 조회
+    /** READ - 단건 조회 */
     @GetMapping("/{id}")
-    public ResponseEntity<Member> getMemberById(@PathVariable Long id){
-        Member member = memberService.findOne(id);
-        if (member == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(member);
+    public ResponseEntity<MemberDto> one(@PathVariable Long id) {
+        Member m = memberService.findOne(id);
+        if (m == null) return ResponseEntity.notFound().build();
+
+        MemberDto dto = new MemberDto(
+                m.getId(),
+                m.getUsername(),
+                m.getPhoneNumber(),
+                m.getUnit() != null ? m.getUnit().getUnitName() : null
+        );
+
+        return ResponseEntity.ok(dto);
     }
 
-    // UPDATE - 회원 정보 수정
+    /** UPDATE */
     @PutMapping("/{id}")
-    public ResponseEntity<Member> updateMember(
+    public ResponseEntity<MemberDto> update(
             @PathVariable Long id,
-            @RequestBody UpdateMemberRequest request){
-        Member member = memberService.findOne(id);
-        if (member == null) {
-            return ResponseEntity.notFound().build();
-        }
+            @RequestBody UpdateMemberRequest request) {
+
         memberService.update(id, request.getUsername(), request.getPhoneNumber());
-        Member updatedMember = memberService.findOne(id);
-        return ResponseEntity.ok(updatedMember);
+        Member updated = memberService.findOne(id);
+
+        MemberDto dto = new MemberDto(
+                updated.getId(),
+                updated.getUsername(),
+                updated.getPhoneNumber(),
+                updated.getUnit() != null ? updated.getUnit().getUnitName() : null
+        );
+
+        return ResponseEntity.ok(dto);
     }
 
-    // DELETE - 회원 삭제
+    /** DELETE */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMember(@PathVariable Long id){
-        Member member = memberService.findOne(id);
-        if (member == null) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         memberService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
+    /** 엑셀 업로드 */
     @PostMapping("/member-excel")
-    public ResponseEntity<?> memberXls(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> excel(@RequestParam("file") MultipartFile file) {
         try {
-            // 엑셀 파일에서 사용자명과 전화번호, 사업단 명을 추출
             List<memberExcelData> members = excelService.parseMemberFile(file);
-            return ResponseEntity.ok(new MemberExcelResponse(members));
+            return ResponseEntity.ok(members);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("파일 처리 중 오류가 발생했습니다: " + e.getMessage()));
+                    .body("엑셀 처리 중 오류: " + e.getMessage());
         }
     }
 
     @PostMapping("/save-members")
-    public ResponseEntity<?> saveMembersFromExcel(@RequestBody SaveMembersRequest request) {
-        try {
-            int savedCount = memberService.saveMembersFromExcel(request.getMembers());
-            return ResponseEntity.ok(new SaveMembersResponse(
-                    savedCount,
-                    savedCount + "명의 회원 정보가 성공적으로 저장되었습니다."
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("회원 정보 저장 중 오류가 발생했습니다: " + e.getMessage()));
-        }
+    public ResponseEntity<SaveMembersResponse> saveMembers(@RequestBody SaveMembersRequest request) {
+        int savedCount = memberService.saveMembersFromExcel(request.getMembers());
+
+        return ResponseEntity.ok(
+                new SaveMembersResponse(
+                        savedCount,
+                        savedCount + "명의 회원 정보가 성공적으로 저장되었습니다."
+                )
+        );
     }
 
-    // Member Excel 응답을 위한 DTO
-    @Data
-    @AllArgsConstructor
-    public static class MemberExcelResponse {
-        private List<memberExcelData> members;
-    }
-
-    // 에러 응답을 위한 DTO
-    @Data
-    @AllArgsConstructor
-    public static class ErrorResponse {
-        private String error;
-    }
-
-    // 회원 정보 수정을 위한 DTO
-    @Data
-    public static class UpdateMemberRequest {
-        private String username;
-        private String phoneNumber;
-    }
-
-    // 회원 저장 요청을 위한 DTO
+    // 엑셀 저장 요청 DTO
     @Data
     public static class SaveMembersRequest {
         private List<memberExcelData> members;
     }
 
-    // 회원 저장 응답을 위한 DTO
+    // 엑셀 저장 응답 DTO
     @Data
     @AllArgsConstructor
     public static class SaveMembersResponse {
         private int savedCount;
         private String message;
     }
+
 
 }

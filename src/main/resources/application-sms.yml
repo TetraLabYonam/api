@@ -1,0 +1,4 @@
+coolsms:
+  api-key: "" #API 키 복붙
+  api-secret: "" #API 시크릿 키 복붙
+  from: "" # 사이트에 등록된 전화번호 입력 (하이픈이나 공백 없이 써야 합니다).

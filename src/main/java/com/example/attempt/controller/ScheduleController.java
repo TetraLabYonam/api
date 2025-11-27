@@ -1,9 +1,30 @@
 package com.example.attempt.controller;
 
-import org.springframework.web.bind.annotation.RestController;
+import com.example.attempt.dto.schedule.CreateScheduleRequest;
+import com.example.attempt.dto.schedule.CreateScheduleResponse;
+import com.example.attempt.service.ScheduleService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
+@RequestMapping("/api/v1/schedule")
+@RequiredArgsConstructor
 public class ScheduleController {
-    // https://junesker.tistory.com/125
-    // 플 캘린더 기반 일정 관리 - 노인 일자리 참여자 본인 스케줄 확인 가능 및 변경 사항이 DB에 첨부되어야 함.
+
+    private final ScheduleService scheduleService;
+
+    @PostMapping
+    public ResponseEntity<CreateScheduleResponse> create(@RequestBody CreateScheduleRequest request) {
+
+        Long id = scheduleService.create(request.getAttendDate());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new CreateScheduleResponse(id));
+    }
 }
+
+

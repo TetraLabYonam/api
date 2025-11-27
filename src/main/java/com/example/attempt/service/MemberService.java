@@ -1,31 +1,32 @@
 package com.example.attempt.service;
 
+import com.example.attempt.domain.Member;
 import com.example.attempt.domain.Unit;
 import com.example.attempt.repository.MemberRepository;
-import com.example.attempt.domain.Member;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
-import static com.example.attempt.service.ExcelService.*;
-
 @Service
-@Transactional
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class MemberService {
 
     private final MemberRepository memberRepository;
 
-    public MemberService(MemberRepository memberRepository) {
-        this.memberRepository = memberRepository;
-    }
-
     @Transactional
-    public Long join(Member member){
+    public Long create(String username, String phoneNumber, String unitName) {
+        Unit unit = new Unit(unitName);
+        Member member = new Member(username, phoneNumber);
+        member.setUnit(unit);
+
         memberRepository.save(member);
         return member.getId();
     }
 
-    public List<Member> findMembers(){
+    public List<Member> findAll() {
         return memberRepository.findAll();
     }
 
@@ -34,16 +35,12 @@ public class MemberService {
     }
 
     @Transactional
-    public void update(Long id, String username, String phoneNumber){
+    public void update(Long id, String username, String phoneNumber) {
         Member member = memberRepository.find(id);
-        if (member != null) {
-            if (username != null) {
-                member.setUsername(username);
-            }
-            if (phoneNumber != null) {
-                member.setPhoneNumber(phoneNumber);
-            }
-        }
+        if (member == null) throw new IllegalArgumentException("존재하지 않는 회원입니다.");
+
+        if (username != null) member.setUsername(username);
+        if (phoneNumber != null) member.setPhoneNumber(phoneNumber);
     }
 
     @Transactional
@@ -52,25 +49,23 @@ public class MemberService {
     }
 
     @Transactional
-    public int saveMembersFromExcel(List<memberExcelData> memberDataList) {
+    public int saveMembersFromExcel(List<ExcelService.memberExcelData> memberDataList) {
         int savedCount = 0;
 
-        for (memberExcelData data : memberDataList) {
+        for (ExcelService.memberExcelData data : memberDataList) {
             try {
-                // Unit 생성 (임베디드 타입)
                 Unit unit = new Unit(data.getUnitName());
 
-                // Member 생성 및 저장
                 Member member = new Member(data.getMemberName(), data.getPhoneNumber());
                 member.setUnit(unit);
+
                 memberRepository.save(member);
                 savedCount++;
             } catch (Exception e) {
-                // 개별 회원 저장 실패 시 로그를 남기고 계속 진행
                 System.err.println("회원 저장 실패: " + data.getMemberName() + " - " + e.getMessage());
             }
         }
-
         return savedCount;
     }
+
 }

@@ -1,27 +1,25 @@
 package com.example.attempt.domain;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.*;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@Setter
 @NoArgsConstructor
-@Data
 public class Schedule {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue
     private Long id;
 
-    @OneToMany(mappedBy = "schedule")
-    private List<Attend>  attends = new ArrayList<>();
+    private LocalDateTime attendDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PLACE_ID")
     private Place place;
-
-    private Date AttendDate;
-
 }
