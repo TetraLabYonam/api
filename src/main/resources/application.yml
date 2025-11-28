@@ -18,13 +18,13 @@ spring:
     properties:
   jpa:
     hibernate:
-      ddl-auto: validate  # Flyway를 사용하므로 validate로 변경
+      ddl-auto: update  # Flyway를 사용하므로 validate로 변경
       hibernate:
         # show_sql: true
         format_sql: true
     open-in-view: false
   flyway:
-    enabled: true
+    enabled: false
     baseline-on-migrate: true
     locations: classpath:db/migration
     sql-migration-prefix: V

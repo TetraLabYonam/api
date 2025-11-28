@@ -22,7 +22,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PlaceRepository placeRepository;
     private final PlaceCrawlingService placeCrawlingService;
 
-    @Value("${geocoding-api-key}")
+    @Value("${geocoding-api-key:}")
     private String geocodingApiKey;
 
     @Override
@@ -44,6 +44,32 @@ public class DataInitializer implements CommandLineRunner {
             if (crawledData.isEmpty()) {
                 log.warn("크롤링된 데이터가 없습니다. 기본 데이터를 삽입합니다.");
                 initializeDefaultPlaces();
+                return;
+            }
+
+            // API 키가 없으면 Geocoding 없이 저장
+            if (geocodingApiKey == null || geocodingApiKey.trim().isEmpty()) {
+                log.warn("Geocoding API 키가 설정되지 않았습니다. 위도/경도 없이 데이터를 저장합니다.");
+                int savedCount = 0;
+                for (PlaceCrawlingService.PlaceData data : crawledData) {
+                    try {
+                        Place place = new Place(
+                                data.getTitle() != null ? data.getTitle() : "정보 없음",
+                                data.getAddress() != null && !data.getAddress().isEmpty() ? data.getAddress() : "주소 정보 없음",
+                                null,
+                                null,
+                                data.getImageUrl(),
+                                data.getPhoneNumber(),
+                                data.getDescription()
+                        );
+                        placeRepository.save(place);
+                        savedCount++;
+                        log.info("Place 저장 완료 (Geocoding 없이): {}", place.getName());
+                    } catch (Exception e) {
+                        log.error("Place 저장 실패: {} - {}", data.getTitle(), e.getMessage());
+                    }
+                }
+                log.info("총 {}개의 Place 데이터가 초기화되었습니다 (Geocoding 없이).", savedCount);
                 return;
             }
 

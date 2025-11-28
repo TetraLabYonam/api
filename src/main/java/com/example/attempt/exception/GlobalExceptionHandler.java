@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 
@@ -58,6 +59,36 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(errorResponse);
+    }
+
+    /**
+     * NoResourceFoundException 처리
+     * WebSocket 등의 정적 리소스 404 에러를 조용히 처리
+     * HTTP 404 (Not Found) 응답
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFoundException(
+            NoResourceFoundException ex,
+            WebRequest request) {
+
+        String path = request.getDescription(false).replace("uri=", "");
+
+        // WebSocket 관련 경로는 debug 레벨로 로그
+        if (path.contains("/ws")) {
+            log.debug("WebSocket 리소스를 찾을 수 없음: {}", path);
+        } else {
+            log.warn("리소스를 찾을 수 없음: {}", path);
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                "요청한 리소스를 찾을 수 없습니다.",
+                LocalDateTime.now(),
+                path
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
                 .body(errorResponse);
     }
 

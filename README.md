@@ -33,6 +33,8 @@
 ### 개발자를 위한 문서
 
 - **🗄️ [데이터베이스 다이어그램](src/main/resources/markDown/DATABASE_DIAGRAMS.md)** - ER 다이어그램 및 시스템 구조
+- **🏢 [Room API 가이드](ROOM_API_GUIDE.md)** - 번호표 방 관리 API 상세 문서
+- **🔧 [문제 해결 가이드](TROUBLESHOOTING.md)** - 주요 이슈 및 해결 방법
 
 ## ✨ 주요 기능
 
@@ -51,6 +53,10 @@
 ### 3. 실시간 번호표 시스템
 - **WebSocket 통신**: 실시간 양방향 통신으로 즉각적인 상태 업데이트
 - **방 관리**: 여러 대기실(Room) 생성 및 관리
+  - RESTful API를 통한 방 CRUD 기능
+  - 일괄 생성으로 여러 방 한 번에 등록
+  - 활성화/비활성화 상태 관리
+  - 번호 초기화 기능
 - **자동 번호 발급**: 사용자별 고유 번호표 자동 발급
 - **중복 방지**: 한 방에서 한 사용자당 하나의 번호표만 발급
 - **현재 번호 관리**: 관리자가 현재 호출 번호 업데이트
@@ -60,6 +66,7 @@
 - **위치 기반 출석**: GPS 좌표를 활용한 출석 체크
 - **스케줄 관리**: 장소별 출석 일정 관리
 - **출석 기록**: 회원별 출석 이력 추적
+- **출석 상태 추적**: SCHEDULED, PRESENT, ABSENT, LATE, EXCUSED 상태 관리
 
 ## 🛠 기술 스택
 
@@ -218,7 +225,8 @@ npm run dev
 
 - **프론트엔드**: `http://localhost:5173`
 - **백엔드 API**: `http://localhost:8080`
-- **API 문서 (Swagger UI)**: `http://localhost:8080/swagger-ui.html`
+- **API 문서 (Swagger UI)**: `http://localhost:8080/swagger-ui/index.html`
+- **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
 
 #### 데이터베이스 접속 정보
 
@@ -246,6 +254,9 @@ attempt/
 │   │   ├── MemberController.java
 │   │   ├── MapController.java
 │   │   ├── PlaceController.java
+│   │   ├── RoomController.java
+│   │   ├── ScheduleController.java
+│   │   ├── AttendController.java
 │   │   └── websocket/
 │   │       └── WebSocketController.java
 │   ├── domain/                    # JPA 엔티티
@@ -265,7 +276,11 @@ attempt/
 │   └── service/                   # 비즈니스 로직
 │       ├── MemberService.java
 │       ├── ExcelService.java
-│       └── TicketService.java
+│       ├── TicketService.java
+│       ├── RoomService.java
+│       ├── ScheduleService.java
+│       ├── AttendService.java
+│       └── PlaceService.java
 │
 ├── frontend/
 │   ├── src/
@@ -326,13 +341,78 @@ attempt/
 | GET | `/map-excel` | Excel 업로드 페이지 |
 | POST | `/api/map-excel` | Excel 파일에서 주소 추출 및 좌표 변환 |
 
+### Room API (`/api/v1/rooms`)
+
+> 📘 상세한 API 사용법은 [ROOM_API_GUIDE.md](ROOM_API_GUIDE.md)를 참고하세요.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | 활성화된 방 목록 조회 |
+| GET | `/all` | 전체 방 목록 조회 (비활성화 포함) |
+| GET | `/{id}` | 방 상세 조회 (ID) |
+| GET | `/uid/{roomUid}` | 방 상세 조회 (UID) |
+| GET | `/details` | 방 상세 정보 조회 (TicketService 기반) |
+| GET | `/{uid}/state` | 방 상태 조회 |
+| GET | `/{uid}/issuances` | 방 발급 내역 조회 |
+| POST | `/` | 방 생성 |
+| POST | `/batch` | 방 일괄 생성 |
+| POST | `/{uid}/reset` | 방 번호 초기화 |
+| PUT | `/{id}` | 방 정보 수정 |
+| PUT | `/{id}/activate` | 방 활성화 |
+| PUT | `/{id}/deactivate` | 방 비활성화 |
+| DELETE | `/{id}` | 방 삭제 |
+
+**방 일괄 생성 예제:**
+```bash
+curl -X POST http://localhost:8080/api/v1/rooms/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "roomNames": [
+      "물금청소년문화의집",
+      "동면 행정복지센터",
+      "원동면 행정복지센터",
+      "상북면 행정복지센터",
+      "하북면 행정복지센터",
+      "양산시니어클럽"
+    ]
+  }'
+```
+
+### Schedule API (`/api/v1/schedule`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | 전체 일정 조회 |
+| GET | `/{id}` | 특정 일정 조회 |
+| GET | `/date/{date}` | 특정 날짜의 일정 조회 |
+| GET | `/active` | 활성화된 일정 조회 |
+| POST | `/` | 일정 생성 |
+| PUT | `/{id}` | 일정 수정 |
+| PUT | `/{id}/deactivate` | 일정 비활성화 |
+| DELETE | `/{id}` | 일정 삭제 |
+
+### Attend API (`/api/v1/attend`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/schedule/{scheduleId}` | 특정 일정의 출석 목록 조회 |
+| GET | `/member/{memberId}` | 특정 회원의 출석 기록 조회 |
+| POST | `/` | 출석 등록 |
+| PUT | `/{id}/mark-present` | 출석 처리 |
+| PUT | `/{id}/mark-absent` | 결석 처리 |
+| PUT | `/{id}/mark-late` | 지각 처리 |
+
 ### WebSocket Endpoints
 
 | Destination | Description |
 |------------|-------------|
-| `/app/join-room` | 방 입장 및 번호표 발급 |
-| `/app/update-current-number` | 현재 호출 번호 업데이트 (관리자) |
-| `/topic/room/{roomUid}` | 방 상태 구독 (클라이언트) |
+| `/ws` | WebSocket 연결 엔드포인트 (SockJS) |
+| `/ws/queue` | WebSocket 연결 엔드포인트 (큐 전용, 하위 호환) |
+| `/app/room/join` | 방 입장 |
+| `/app/room/issue` | 번호표 발급 |
+| `/app/room/notify` | 특정 번호 알림 (관리자) |
+| `/topic/room/{roomUid}/state` | 방 상태 구독 |
+| `/topic/room/{roomUid}/notification/{userKey}` | 개인 알림 구독 |
 
 ## 🗄️ 데이터베이스 구조
 
@@ -425,6 +505,22 @@ SECURITY: 보안 관련 수정
 
 ## 📝 주요 변경 이력
 
+- **2025-11-28**: Room API 추가 및 문서화
+  - Room CRUD API 구현 (`/api/v1/rooms`)
+  - 일괄 방 생성 기능 추가
+  - RoomService, RoomController, Room DTOs 추가
+  - ROOM_API_GUIDE.md 작성
+  - TROUBLESHOOTING.md 작성 (의존성 주입, Flyway, Swagger, WebSocket 문제 해결 기록)
+- **2025-11-28**: 출석 및 스케줄 관리 기능 개선
+  - Schedule API 구현 (`/api/v1/schedule`)
+  - Attend API 구현 (`/api/v1/attend`)
+  - 출석 상태 관리 (SCHEDULED, PRESENT, ABSENT, LATE, EXCUSED)
+  - Flyway 마이그레이션 추가 (V1__init_schema.sql)
+- **2025-11-28**: 문제 해결 및 최적화
+  - DataInitializer 의존성 주입 문제 해결
+  - Flyway 마이그레이션 설정 개선 (local vs production)
+  - Swagger 버전 호환성 문제 해결 (SpringDoc 2.7.0 업그레이드)
+  - WebSocket 엔드포인트 개선 (`/ws`, `/ws/queue` 추가)
 - **2025-11-24**: 데이터베이스 H2 → MariaDB 전환, React 19 업그레이드
 - **2025-11**: React 프론트엔드 마이그레이션 (Vite 기반)
 - **2025-11**: Zustand 상태 관리 라이브러리 도입

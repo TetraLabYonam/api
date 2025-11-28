@@ -27,8 +27,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // WebSocket 엔드포인트 등록
         // Flutter 앱과 실시간 통신을 위한 엔드포인트
-        registry.addEndpoint("/ws/queue")
+
+        // 메인 엔드포인트 (간단한 경로)
+        registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")  // 모든 출처 허용 (모바일 앱 대응)
                 .withSockJS();  // SockJS fallback 지원
+
+        // 큐 전용 엔드포인트 (하위 호환성)
+        registry.addEndpoint("/ws/queue")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
 }
