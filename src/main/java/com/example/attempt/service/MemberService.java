@@ -30,12 +30,12 @@ public class MemberService {
     }
 
     public Member findOne(Long id) {
-        return memberRepository.find(id);
+        return memberRepository.findById(id).orElse(null);
     }
 
     @Transactional
     public void update(Long id, String username, String phoneNumber){
-        Member member = memberRepository.find(id);
+        Member member = memberRepository.findById(id).orElse(null);
         if (member != null) {
             if (username != null) {
                 member.setUsername(username);

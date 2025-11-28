@@ -117,7 +117,7 @@ flutter_app/
 │   │   └── schedule_service.dart
 │   ├── screens/
 │   │   ├── schedule_create_screen.dart
-│   │   ├── schedule_list_screen.dart
+│   │   ├── schdule_list_screen.dart
 │   │   └── attend_check_in_screen.dart
 │   └── widgets/
 │       ├── calendar_widget.dart

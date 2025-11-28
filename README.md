@@ -66,24 +66,28 @@
 ### Backend
 - **Framework**: Spring Boot 3.5.6
 - **Language**: Java 17
-- **Database**: H2 (In-Memory)
+- **Database**: MariaDB (개발/테스트 시 H2 사용 가능)
 - **ORM**: JPA / Hibernate 6
 - **Real-time**: WebSocket (STOMP)
+- **Cache**: Redis
 - **Build Tool**: Gradle
+- **API Documentation**: SpringDoc OpenAPI 3.0
 - **Libraries**:
   - Apache POI (Excel 처리)
   - Jsoup (웹 스크래핑)
   - Lombok (코드 간소화)
   - p6spy (SQL 로깅)
+  - Google Maps Services (Geocoding)
 
 ### Frontend
-- **Framework**: React 18
-- **Build Tool**: Vite
-- **Routing**: React Router v6
+- **Framework**: React 19.1.1
+- **Build Tool**: Vite 7.1.7
+- **Routing**: React Router v7
+- **State Management**: Zustand 5.0
 - **Styling**: CSS Modules
 - **HTTP Client**: Axios
-- **Real-time**: Socket.IO Client (WebSocket)
-- **Maps**: Google Maps React
+- **Real-time**: STOMP over WebSocket
+- **Maps**: @react-google-maps/api
 
 ### External APIs
 - Google Maps Geocoding API
@@ -96,6 +100,8 @@
 - Java 17 이상
 - Node.js 18 이상
 - npm 또는 yarn
+- MariaDB 10.6 이상 (또는 개발/테스트 시 H2 사용 가능)
+- Redis (선택사항)
 - Google Cloud Platform 계정 (Maps API 키 필요)
 
 ### 설정
@@ -107,7 +113,45 @@ git clone https://github.com/TetraLabYonam/api.git
 cd attempt
 ```
 
-#### 2. Google API 키 설정
+#### 2. 데이터베이스 설정
+
+##### MariaDB 설치 및 설정 (권장)
+
+**macOS (Homebrew):**
+```bash
+brew install mariadb
+brew services start mariadb
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install mariadb-server
+sudo systemctl start mariadb
+```
+
+**Windows:**
+- [MariaDB 공식 사이트](https://mariadb.org/download/)에서 설치 파일 다운로드
+
+##### 데이터베이스 및 사용자 생성
+
+```bash
+# MariaDB 접속
+mysql -u root -p
+
+# 데이터베이스 생성
+CREATE DATABASE queueapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+# 사용자 생성 및 권한 부여
+CREATE USER 'queue'@'localhost' IDENTIFIED BY 'queuepw';
+GRANT ALL PRIVILEGES ON queueapp.* TO 'queue'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+> **개발/테스트 환경**: MariaDB 대신 H2 In-Memory DB를 사용하려면 `application.yml`에서 datasource 설정을 H2로 변경하세요.
+
+#### 3. Google API 키 설정
 
 ##### Google Cloud Console에서 API 키 발급
 
@@ -174,10 +218,22 @@ npm run dev
 
 - **프론트엔드**: `http://localhost:5173`
 - **백엔드 API**: `http://localhost:8080`
-- **H2 Console**: `http://localhost:8080/h2-console`
-  - JDBC URL: `jdbc:h2:mem:test`
-  - Username: `sa`
-  - Password: (비어있음)
+- **API 문서 (Swagger UI)**: `http://localhost:8080/swagger-ui.html`
+
+#### 데이터베이스 접속 정보
+
+**MariaDB:**
+- Host: `localhost`
+- Port: `3306`
+- Database: `queueapp`
+- Username: `queue`
+- Password: `queuepw`
+
+**H2 Console** (개발 모드):
+- URL: `http://localhost:8080/h2-console`
+- JDBC URL: `jdbc:h2:mem:test`
+- Username: `sa`
+- Password: (비어있음)
 
 ## 📁 프로젝트 구조
 
@@ -228,15 +284,19 @@ attempt/
 │   │   │   └── roomService.js
 │   │   ├── contexts/              # React Context
 │   │   │   └── SocketContext.jsx
-│   │   └── stores/                # 상태 관리
-│   │       ├── roomStore.js
-│   │       └── userStore.js
-│   └── package.json
+│   │   ├── stores/                # Zustand 상태 관리
+│   │   │   ├── roomStore.js
+│   │   │   └── userStore.js
+│   │   └── App.jsx                # 루트 컴포넌트
+│   ├── package.json
+│   └── vite.config.js             # Vite 설정
 │
 └── DATABASE_DIAGRAMS.md           # 데이터베이스 다이어그램 문서
 ```
 
 ## 🔌 API 엔드포인트
+
+> **💡 Tip**: 전체 API 문서는 서버 실행 후 [Swagger UI](http://localhost:8080/swagger-ui.html)에서 확인하세요.
 
 ### Member API (`/api/v1/member`)
 
@@ -346,21 +406,33 @@ SECURITY: 보안 관련 수정
 - **API 키 관리**:
   - 절대로 API 키를 Git에 커밋하지 마세요
   - `.env` 파일과 `application-API-KEY.properties`는 `.gitignore`에 포함됨
+  - 프로덕션 환경에서는 환경 변수 또는 Secret Manager 사용 권장
 
-- **프로덕션 배포**:
-  - H2 콘솔 비활성화 (`spring.h2.console.enabled=false`)
-  - `ddl-auto`를 `validate`로 변경
-  - 실제 데이터베이스(MySQL, PostgreSQL 등) 사용 권장
-  - WebSocket CORS 설정 검토
-  - 환경 변수로 민감한 정보 관리
+- **데이터베이스 보안**:
+  - 기본 비밀번호(`queuepw`) 변경 필수
+  - 프로덕션 환경에서는 강력한 비밀번호 사용
+  - 필요한 권한만 부여 (최소 권한 원칙)
+
+- **프로덕션 배포 체크리스트**:
+  - [ ] H2 콘솔 비활성화 (`spring.h2.console.enabled=false`)
+  - [ ] `ddl-auto`를 `validate` 또는 `none`으로 변경
+  - [ ] MariaDB 비밀번호 변경 및 환경 변수로 관리
+  - [ ] CORS 설정 검토 (허용된 origin만 지정)
+  - [ ] WebSocket CORS 설정 검토 (`app.socket.cors-origins`)
+  - [ ] Redis 비밀번호 설정 (사용 시)
+  - [ ] HTTPS 적용
+  - [ ] 민감한 정보를 환경 변수로 관리
 
 ## 📝 주요 변경 이력
 
-- **2025-11**: React 프론트엔드 마이그레이션, 회원 Excel 업로드 기능 추가
+- **2025-11-24**: 데이터베이스 H2 → MariaDB 전환, React 19 업그레이드
+- **2025-11**: React 프론트엔드 마이그레이션 (Vite 기반)
+- **2025-11**: Zustand 상태 관리 라이브러리 도입
 - **2025-11**: Socket.io → WebSocket(STOMP) 마이그레이션
-- **2025-11**: 번호표 시스템 구현
-- **2025-11**: Excel 기반 장소 관리 기능 구현
+- **2025-11**: 실시간 번호표 시스템 구현
+- **2025-11**: Excel 기반 장소 관리 및 Geocoding 기능 구현
 - **2025-11**: Google Maps API 통합
+- **2025-11**: SpringDoc OpenAPI 문서화 추가
 
 ## 📄 라이선스
 

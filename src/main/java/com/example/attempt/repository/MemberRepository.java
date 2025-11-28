@@ -1,46 +1,43 @@
 package com.example.attempt.repository;
 
 import com.example.attempt.domain.Member;
-import jakarta.persistence.EntityManager;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
-@Repository
-@RequiredArgsConstructor
-public class MemberRepository {
+/**
+ * Member 엔티티 Repository
+ */
+public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    private final EntityManager em;
+    /**
+     * 이름으로 회원 조회
+     */
+    List<Member> findByUsername(String username);
 
-    public void save(Member member){
-        em.persist(member);
-    }
+    /**
+     * 전화번호로 회원 조회
+     */
+    Optional<Member> findByPhoneNumber(String phoneNumber);
 
-    public Member find(Long id) {
-        return em.find(Member.class, id); // 단건 조회
-    }
+    /**
+     * 사업단명으로 회원 조회 (Unit은 Embedded 타입)
+     */
+    @Query("SELECT m FROM Member m WHERE m.unit.name = :unitName")
+    List<Member> findByUnitName(@Param("unitName") String unitName);
 
-    public List<Member> findAll() { // Could not resolve root entity JPQL 대소문자 관련 문제
-        return em.createQuery("select m from Member m ", Member.class)
-                .getResultList(); // 엔티티 멤버를 조회.
-    } // From의 대상이 Member 엔티티가 됨
+    /**
+     * 여러 사업단명으로 회원 조회
+     */
+    @Query("SELECT m FROM Member m WHERE m.unit.name IN :unitNames")
+    List<Member> findByUnitNames(@Param("unitNames") List<String> unitNames);
 
-    public List<Member> findByName(String name) {
-        return em.createQuery("select m from Member m where m.name = :name", Member.class)
-                .setParameter("name", name)
-                .getResultList();
-    }
-
-    public void delete(Member member) {
-        em.remove(member);
-    }
-
-    public void deleteById(Long id) {
-        Member member = find(id);
-        if (member != null) {
-            em.remove(member);
-        }
-    }
-
+    /**
+     * 사업단 타입으로 회원 조회
+     */
+    @Query("SELECT m FROM Member m WHERE m.unit.type = :unitType")
+    List<Member> findByUnitType(@Param("unitType") String unitType);
 }
