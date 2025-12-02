@@ -55,7 +55,7 @@ public class MemberController {
         if (member == null) {
             return ResponseEntity.notFound().build();
         }
-        memberService.update(id, request.getUsername(), request.getPhoneNumber());
+        memberService.update(id, request.getUsername(), request.getPhoneNumber(), request.getGuardianPhone());
         Member updatedMember = memberService.findOne(id);
         return ResponseEntity.ok(updatedMember);
     }
@@ -116,6 +116,7 @@ public class MemberController {
     public static class UpdateMemberRequest {
         private String username;
         private String phoneNumber;
+        private String guardianPhone;
     }
 
     // 회원 저장 요청을 위한 DTO

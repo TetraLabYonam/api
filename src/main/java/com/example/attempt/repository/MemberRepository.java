@@ -27,7 +27,7 @@ public class MemberRepository {
     } // From의 대상이 Member 엔티티가 됨
 
     public List<Member> findByName(String name) {
-        return em.createQuery("select m from Member m where m.name = :name", Member.class)
+        return em.createQuery("select m from Member m where m.username = :name", Member.class)
                 .setParameter("name", name)
                 .getResultList();
     }

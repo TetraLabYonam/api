@@ -2,6 +2,7 @@ package com.example.attempt.service;
 
 import com.example.attempt.domain.Unit;
 import com.example.attempt.repository.MemberRepository;
+import com.example.attempt.repository.AttendRepository;
 import com.example.attempt.domain.Member;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,9 +15,11 @@ import static com.example.attempt.service.ExcelService.*;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final AttendRepository attendRepository;
 
-    public MemberService(MemberRepository memberRepository) {
+    public MemberService(MemberRepository memberRepository, AttendRepository attendRepository) {
         this.memberRepository = memberRepository;
+        this.attendRepository = attendRepository;
     }
 
     @Transactional
@@ -34,7 +37,7 @@ public class MemberService {
     }
 
     @Transactional
-    public void update(Long id, String username, String phoneNumber){
+    public void update(Long id, String username, String phoneNumber, String guardianPhone){
         Member member = memberRepository.find(id);
         if (member != null) {
             if (username != null) {
@@ -43,12 +46,17 @@ public class MemberService {
             if (phoneNumber != null) {
                 member.setPhoneNumber(phoneNumber);
             }
+            if (guardianPhone != null) {
+                member.setGuardianPhone(guardianPhone);
+            }
         }
     }
 
     @Transactional
     public void delete(Long id) {
+        attendRepository.deleteByMemberId(id);
         memberRepository.deleteById(id);
+
     }
 
     @Transactional
