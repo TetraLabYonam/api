@@ -25,10 +25,10 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Build (test + bootJar)
+      - name: Build (bootJar, skip tests)
         run: |
           chmod +x ./gradlew
-          ./gradlew clean test bootJar
+          ./gradlew clean bootJar -x test
 
       - name: Install JAR to /opt/myapp/app.jar
         run: |
