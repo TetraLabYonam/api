@@ -71,4 +71,6 @@ public interface AttendRepository extends JpaRepository<Attend, Long> {
            "WHERE a.schedule.id = :scheduleId " +
            "GROUP BY a.status")
     List<Object[]> getAttendanceStatsByScheduleId(@Param("scheduleId") Long scheduleId);
+    boolean existsByMemberIdAndScheduleId(Long memberId, Long scheduleId);
+    void deleteByMemberId(Long memberId);
 }

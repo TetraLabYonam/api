@@ -1,6 +1,7 @@
 package com.example.attempt.domain;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,8 +27,10 @@ public class Member {
     private Long id; // 직번으로 기본키 설정 여부
     private String username;
     private String phoneNumber;
+    private String guardianPhone;
 
     @OneToMany(mappedBy = "member")
+    @JsonIgnore // prevent lazy-loaded attends from being serialized
     private List<Attend> attends = new ArrayList<>();
 
     @Embedded
@@ -36,6 +39,12 @@ public class Member {
     public Member(String username, String phoneNumber) {
         this.username = username;
         this.phoneNumber = phoneNumber;
+    }
+
+    public Member(String username, String phoneNumber, String guardianPhone) {
+        this.username = username;
+        this.phoneNumber = phoneNumber;
+        this.guardianPhone = guardianPhone;
     }
 
 }
