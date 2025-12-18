@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://52.78.88.221';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -152,7 +152,7 @@ export const getMembers = async () => {
 // 위치 목록 조회
 export const getPlaces = async () => {
   try {
-    const response = await apiClient.get('/api/place/places');
+    const response = await apiClient.get('/api/place/list');
     return response.data;
   } catch (error) {
     console.error('위치 목록 조회 실패:', error);

@@ -10,7 +10,7 @@ export const SocketProvider = ({ children }) => {
   const clientRef = useRef(null);
 
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    const API_URL = import.meta.env.VITE_API_URL || 'http://52.78.88.221';
     const WS_URL = `${API_URL}/ws`;
 
     console.log('[WebSocket] Connecting to', WS_URL);

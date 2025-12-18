@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
@@ -16,4 +17,9 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     @Query("select r from Room r where r.roomUid = :uid")
     Optional<Room> findByRoomUidForUpdate(@Param("uid") String roomUid);
 
+    // 활성화된 방만 조회
+    List<Room> findByIsActiveTrue();
+
+    // 활성화된 방 전체 조회 (정렬)
+    List<Room> findByIsActiveTrueOrderByCreatedAtDesc();
 }

@@ -1,15 +1,50 @@
+# 로컬 개발 환경 설정
+# 사용 방법: --spring.profiles.active=local
+
 server:
   port: 8080
 
 spring:
+  # H2 인메모리 데이터베이스 (빠른 시연용)
   datasource:
     url: jdbc:h2:mem:queueapp;MODE=MySQL;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
+  h2:
+    console:
+      enabled: true  # H2 콘솔 활성화: http://localhost:8080/h2-console
+      path: /h2-console
+
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: update  # 테이블 자동 생성
+    show-sql: true  # SQL 로그 출력
+    properties:
+      hibernate:
+        format_sql: true
     open-in-view: false
 
+  flyway:
+    enabled: false  # H2 사용 시 Flyway 비활성화
+
+# 출석 관련 설정
+attendance:
+  location:
+    radius: 100  # 출석 가능 반경 (미터)
+
+# WebSocket CORS (로컬 개발 환경)
+app:
+  socket:
+    cors-origins: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+
+# 로깅 레벨
+logging:
+  level:
+    com.example.attempt: DEBUG  # 애플리케이션 로그
+    org.springframework.web: DEBUG  # Spring Web 로그
+    org.springframework.messaging: DEBUG  # WebSocket 로그
+    org.hibernate.SQL: DEBUG  # SQL 로그
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # SQL 파라미터 로그

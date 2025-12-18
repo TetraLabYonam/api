@@ -42,8 +42,14 @@
   transform: scale(1.02);
 }
 
-.logo-icon {
-  font-size: 28px;
+.logo-image {
+  height: 40px;
+  width: auto;
+  transition: all 0.2s ease;
+}
+
+.logo-image:hover {
+  transform: scale(1.05);
 }
 
 .header-right {
