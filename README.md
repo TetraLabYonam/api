@@ -33,15 +33,15 @@
 ### 개발자를 위한 문서
 
 - **🗄️ [데이터베이스 다이어그램](src/main/resources/markDown/DATABASE_DIAGRAMS.md)** - ER 다이어그램 및 시스템 구조
-- **🏢 [Room API 가이드](ROOM_API_GUIDE.md)** - 번호표 방 관리 API 상세 문서
-- **🔧 [문제 해결 가이드](TROUBLESHOOTING.md)** - 주요 이슈 및 해결 방법
-- **📄 [비즈니스 로직 문서](BUSINESS_LOGIC_FOR_PAPER.md)** - 논문용 핵심 비즈니스 로직 정리
+- **🏢 [Room API 가이드](src/main/resources/markDown/ROOM_API_GUIDE.md)** - 번호표 방 관리 API 상세 문서
+- **🔧 [문제 해결 가이드](src/main/resources/markDown/TROUBLESHOOTING.md)** - 주요 이슈 및 해결 방법
+- **📄 [비즈니스 로직 문서](src/main/resources/markDown/BUSINESS_LOGIC_FOR_PAPER.md)** - 논문용 핵심 비즈니스 로직 정리
 
 ### Flutter 앱 개발자를 위한 문서
 
-- **📱 [Flutter 빠른 시작](FLUTTER_QUICKSTART.md)** - 5분 만에 Flutter 앱 연동하기
-- **📱 [Flutter 통합 가이드](FLUTTER_INTEGRATION_GUIDE.md)** - Flutter 앱 전체 연동 가이드
-- **🧪 [API 테스트 가이드](API_TESTING_GUIDE.md)** - REST API 및 WebSocket 테스트 방법
+- **📱 [Flutter 빠른 시작](src/main/resources/markDown/FLUTTER_QUICKSTART.md)** - 5분 만에 Flutter 앱 연동하기
+- **📱 [Flutter 통합 가이드](src/main/resources/markDown/FLUTTER_INTEGRATION_GUIDE.md)** - Flutter 앱 전체 연동 가이드
+- **🧪 [API 테스트 가이드](src/main/resources/markDown/API_TESTING_GUIDE.md)** - REST API 및 WebSocket 테스트 방법
 
 ## ✨ 주요 기능
 
@@ -350,7 +350,7 @@ attempt/
 
 ### Room API (`/api/v1/rooms`)
 
-> 📘 상세한 API 사용법은 [ROOM_API_GUIDE.md](ROOM_API_GUIDE.md)를 참고하세요.
+> 📘 상세한 API 사용법은 [ROOM_API_GUIDE.md](src/main/resources/markDown/ROOM_API_GUIDE.md)를 참고하세요.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
