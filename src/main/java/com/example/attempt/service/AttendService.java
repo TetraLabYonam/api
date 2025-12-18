@@ -26,6 +26,7 @@ import java.time.LocalTime;
 public class AttendService {
 
     private final AttendRepository attendRepository;
+    private final SmsService smsService;
 
     /**
      * 위치 검증 반경 (미터)
@@ -92,6 +93,14 @@ public class AttendService {
 
         attendRepository.save(attend);
 
+        // 6. SMS 알림 전송
+        try {
+            smsService.sendAttendanceNotification(attend);
+        } catch (Exception e) {
+            log.error("SMS 전송 실패: attendId={}", attend.getId(), e);
+            // SMS 전송 실패는 출석 처리에 영향을 주지 않음
+        }
+
         return AttendCheckInResponse.builder()
                 .attendId(attend.getId())
                 .status(attend.getStatus())
@@ -114,6 +123,13 @@ public class AttendService {
         attend.markAbsent(reason);
         attendRepository.save(attend);
 
+        // SMS 알림 전송
+        try {
+            smsService.sendAbsenceNotification(attend, reason);
+        } catch (Exception e) {
+            log.error("결석 SMS 전송 실패: attendId={}", attendId, e);
+        }
+
         log.info("결석 처리 완료: attendId={}, reason={}", attendId, reason);
     }
 
@@ -126,6 +142,13 @@ public class AttendService {
 
         attend.markExcused(reason);
         attendRepository.save(attend);
+
+        // SMS 알림 전송
+        try {
+            smsService.sendAbsenceNotification(attend, reason);
+        } catch (Exception e) {
+            log.error("사유 인정 결석 SMS 전송 실패: attendId={}", attendId, e);
+        }
 
         log.info("사유 인정 결석 처리 완료: attendId={}, reason={}", attendId, reason);
     }
