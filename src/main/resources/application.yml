@@ -18,7 +18,7 @@ spring:
     properties:
   jpa:
     hibernate:
-      ddl-auto: update  # Flyway를 사용하므로 validate로 변경
+      ddl-auto: validate  # Flyway를 사용하므로 validate로 변경
       hibernate:
         # show_sql: true
         format_sql: true

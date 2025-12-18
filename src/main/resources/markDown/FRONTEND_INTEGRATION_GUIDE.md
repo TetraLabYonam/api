@@ -263,7 +263,7 @@ class Member {
 import 'package:dio/dio.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8080/api/v1';
+  static const String baseUrl = 'http://52.78.88.221/api/v1';
 
   final Dio _dio = Dio(
     BaseOptions(
@@ -1029,7 +1029,7 @@ export interface ScheduleCreateResponse {
 import axios from 'axios';
 import type { Schedule, ScheduleCreateRequest, ScheduleCreateResponse } from '../types/schedule';
 
-const API_BASE_URL = 'http://localhost:8080/api/v1';
+const API_BASE_URL = 'http://52.78.88.221/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
