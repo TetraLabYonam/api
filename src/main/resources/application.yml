@@ -48,8 +48,15 @@ spring:
 app:
   socket:
     cors-origins: "https://example.com,http://localhost:3000,http://localhost:5173"
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173,http://10.0.2.2:8080,http://192.168.0.100:8080}
 
 # 출석 관련 설정
 attendance:
   location:
     radius: 100  # 출석 가능 반경 (미터)
+
+# JWT 인증 설정
+jwt:
+  secret: ${JWT_SECRET:your-256-bit-secret-key-change-this-in-production-environment-must-be-very-long}
+  access-exp-ms: ${JWT_ACCESS_EXP:900000}  # 15분 (900000ms)
+  refresh-exp-ms: ${JWT_REFRESH_EXP:1209600000}  # 14일 (1209600000ms)
