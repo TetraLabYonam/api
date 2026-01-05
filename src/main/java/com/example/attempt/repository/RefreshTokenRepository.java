@@ -19,4 +19,9 @@ public interface RefreshTokenRepository extends CrudRepository<RefreshToken, Lon
     int revokeByHash(@Param("hash") String hash, @Param("now") LocalDateTime now);
 
     int deleteByUsernameAndExpiresAtBefore(String username, LocalDateTime now);
+
+    @Modifying
+    @Query("delete from RefreshToken r where r.expiresAt < :now")
+    int deleteByExpiresAtBefore(@Param("now") LocalDateTime now);
 }
+
