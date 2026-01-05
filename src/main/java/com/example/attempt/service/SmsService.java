@@ -60,38 +60,6 @@ public class SmsService {
     }
 
     /**
-     * 출근 알림 SMS 전송
-     */
-    public void sendClockInNotification(Attend attend) {
-        if (attend == null || attend.getClockInTime() == null) {
-            log.warn("출근 정보가 없어 SMS를 전송할 수 없습니다.");
-            return;
-        }
-
-        String message = String.format("[출근 알림] %s 님이 %s에 출근했습니다.",
-                attend.getMember().getUsername(),
-                TIME_FORMAT.format(attend.getClockInTime()));
-
-        sendGuardianMessage(attend.getMember(), message);
-    }
-
-    /**
-     * 퇴근 알림 SMS 전송
-     */
-    public void sendClockOutNotification(Attend attend) {
-        if (attend == null || attend.getClockOutTime() == null) {
-            log.warn("퇴근 정보가 없어 SMS를 전송할 수 없습니다.");
-            return;
-        }
-
-        String message = String.format("[퇴근 알림] %s 님이 %s에 퇴근했습니다.",
-                attend.getMember().getUsername(),
-                TIME_FORMAT.format(attend.getClockOutTime()));
-
-        sendGuardianMessage(attend.getMember(), message);
-    }
-
-    /**
      * 출석 알림 SMS 전송
      */
     public void sendAttendanceNotification(Attend attend) {
