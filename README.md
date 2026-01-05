@@ -537,6 +537,15 @@ SECURITY: 보안 관련 수정
 - **2025-11**: Google Maps API 통합
 - **2025-11**: SpringDoc OpenAPI 문서화 추가
 
+## Refresh Token Configuration
+
+- `REFRESH_TOKEN_HASH_SECRET` (required): HMAC secret used to hash refresh tokens before storing in DB. Must be set in production; application fails to start without it.
+- `JWT_SECRET` (required): Secret used to sign access JWTs.
+- `JWT_REFRESH_EXP` / `jwt.refresh-exp-ms` (optional): refresh token TTL in milliseconds (default 1209600000 = 14 days).
+- `refresh-token.cookie.secure` (optional): whether refresh cookie has `Secure` flag (set to `true` in production/HTTPS).
+
+A scheduled cleanup job `RefreshTokenCleanupJob` runs daily to remove expired refresh tokens.
+
 ## 📄 라이선스
 
 이 프로젝트는 개인 학습/개발 목적으로 작성되었습니다.
