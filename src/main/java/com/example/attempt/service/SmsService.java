@@ -9,6 +9,8 @@ import net.nurigo.sdk.message.request.SingleMessageSendingRequest;
 import net.nurigo.sdk.message.service.DefaultMessageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.time.format.DateTimeFormatter;
 
@@ -18,6 +20,7 @@ import java.time.format.DateTimeFormatter;
  * - 출석, 결석 등의 알림 메시지 전송
  */
 @Service
+@ConditionalOnProperty(prefix = "coolsms", name = "api.key")
 @Slf4j
 public class SmsService {
 
