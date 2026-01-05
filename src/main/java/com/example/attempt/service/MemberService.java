@@ -37,7 +37,7 @@ public class MemberService {
     }
 
     @Transactional
-    public void update(Long id, String username, String phoneNumber){
+    public void update(Long id, String username, String phoneNumber, String guardianPhone){
         Member member = memberRepository.findById(id).orElse(null);
         if (member != null) {
             if (username != null) {
