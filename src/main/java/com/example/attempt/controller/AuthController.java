@@ -3,11 +3,14 @@ package com.example.attempt.controller;
 import com.example.attempt.domain.Admin;
 import com.example.attempt.repository.AdminRepository;
 import com.example.attempt.security.JwtTokenProvider;
+import com.example.attempt.service.RefreshTokenService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,13 +25,22 @@ public class AuthController {
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
+
+    @Value("${jwt.refresh-exp-ms:1209600000}")
+    private long refreshExpMs;
+
+    @Value("${refresh-token.cookie.secure:false}")
+    private boolean cookieSecure;
 
     public AuthController(AdminRepository adminRepository,
                           PasswordEncoder passwordEncoder,
-                          JwtTokenProvider jwtTokenProvider) {
+                          JwtTokenProvider jwtTokenProvider,
+                          RefreshTokenService refreshTokenService) {
         this.adminRepository = adminRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.refreshTokenService = refreshTokenService;
     }
 
     /**
@@ -40,6 +52,7 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
         String username = body.get("username");
         String password = body.get("password");
+        String deviceId = body.get("deviceId");
 
         Optional<Admin> opt = adminRepository.findByUsername(username);
         if (opt.isEmpty() || !passwordEncoder.matches(password, opt.get().getPassword())) {
@@ -51,13 +64,15 @@ public class AuthController {
                 admin.getUsername(),
                 Map.of("roles", new String[] {"ROLE_ADMIN"})
         );
-        String refreshToken = jwtTokenProvider.createRefreshToken(admin.getUsername());
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+        // Create DB-backed refresh token (opaque) and set as HttpOnly cookie
+        String rawRefresh = refreshTokenService.createRefreshToken(admin.getUsername(), deviceId, Duration.ofMillis(refreshExpMs));
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", rawRefresh)
                 .httpOnly(true)
-                .secure(false) // 운영 환경: true (HTTPS 필수)
+                .secure(cookieSecure) // 운영 환경: true (HTTPS 필수)
                 .path("/api/auth/refresh")
-                .maxAge(60 * 60 * 24 * 30) // 30일
+                .maxAge(refreshExpMs / 1000)
                 .sameSite("Strict")
                 .build();
 
@@ -73,17 +88,34 @@ public class AuthController {
      */
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
-        if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid refresh token"));
+        if (refreshToken == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Missing refresh token"));
         }
 
-        String subject = jwtTokenProvider.getClaims(refreshToken).getSubject();
+        Optional<String> optUsername = refreshTokenService.consumeRefreshToken(refreshToken);
+        if (optUsername.isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
+        String username = optUsername.get();
         String accessToken = jwtTokenProvider.createAccessToken(
-                subject,
+                username,
                 Map.of("roles", new String[] {"ROLE_ADMIN"})
         );
 
-        return ResponseEntity.ok(Map.of("accessToken", accessToken));
+        // Issue rotated refresh token
+        String newRaw = refreshTokenService.createRefreshToken(username, null, Duration.ofMillis(refreshExpMs));
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", newRaw)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/api/auth/refresh")
+                .maxAge(refreshExpMs / 1000)
+                .sameSite("Strict")
+                .build();
+
+        return ResponseEntity.ok()
+                .header("Set-Cookie", refreshCookie.toString())
+                .body(Map.of("accessToken", accessToken));
     }
 
     /**
@@ -91,16 +123,18 @@ public class AuthController {
      * refreshToken 쿠키 삭제
      */
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
+    public ResponseEntity<?> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
+        if (refreshToken != null) {
+            refreshTokenService.revokeRefreshToken(refreshToken);
+        }
+
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false) // 운영 환경: true
+                .secure(cookieSecure)
                 .path("/api/auth/refresh")
                 .maxAge(0)
                 .sameSite("Strict")
                 .build();
-
-        // TODO: refresh token blacklist 구현 (서버 측 토큰 무효화)
 
         return ResponseEntity.ok()
                 .header("Set-Cookie", deleteCookie.toString())
