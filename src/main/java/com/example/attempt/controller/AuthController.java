@@ -98,6 +98,10 @@ public class AuthController {
         }
 
         String username = optUsername.get();
+        if (adminRepository.findByUsername(username).isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
         String accessToken = jwtTokenProvider.createAccessToken(
                 username,
                 Map.of("roles", new String[] {"ROLE_ADMIN"})

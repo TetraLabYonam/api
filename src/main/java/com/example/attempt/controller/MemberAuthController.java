@@ -3,6 +3,7 @@ package com.example.attempt.controller;
 import com.example.attempt.domain.Member;
 import com.example.attempt.dto.memberauth.OtpRequestRequest;
 import com.example.attempt.dto.memberauth.OtpVerifyRequest;
+import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.MemberRepository;
 import com.example.attempt.security.JwtTokenProvider;
 import com.example.attempt.service.MemberOtpService;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/member-auth")
@@ -61,7 +63,7 @@ public class MemberAuthController {
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", rawRefresh)
                 .httpOnly(true)
                 .secure(cookieSecure)
-                .path("/api/auth/refresh")
+                .path("/api/v1/member-auth/refresh")
                 .maxAge(refreshExpMs / 1000)
                 .sameSite("Strict")
                 .build();
@@ -69,5 +71,39 @@ public class MemberAuthController {
         return ResponseEntity.ok()
                 .header("Set-Cookie", refreshCookie.toString())
                 .body(Map.of("accessToken", accessToken, "memberId", member.getId()));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
+        if (refreshToken == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Missing refresh token"));
+        }
+
+        Optional<String> optPhoneNumber = refreshTokenService.consumeRefreshToken(refreshToken);
+        if (optPhoneNumber.isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
+        String phoneNumber = optPhoneNumber.get();
+        Member member = memberRepository.findByPhoneNumber(phoneNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("인증된 회원을 찾을 수 없습니다. phoneNumber=" + phoneNumber));
+
+        String accessToken = jwtTokenProvider.createAccessToken(
+                member.getPhoneNumber(),
+                Map.of("roles", new String[]{"ROLE_MEMBER"})
+        );
+
+        String newRaw = refreshTokenService.createRefreshToken(phoneNumber, null, Duration.ofMillis(refreshExpMs));
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", newRaw)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/api/v1/member-auth/refresh")
+                .maxAge(refreshExpMs / 1000)
+                .sameSite("Strict")
+                .build();
+
+        return ResponseEntity.ok()
+                .header("Set-Cookie", refreshCookie.toString())
+                .body(Map.of("accessToken", accessToken));
     }
 }
