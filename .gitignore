@@ -41,3 +41,6 @@ application-API-KEY.properties
 
 ### Superpowers scratch ###
 .superpowers/
+
+### p6spy test log ###
+spy.log
