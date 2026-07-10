@@ -65,6 +65,28 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * IllegalStateException 처리
+     * HTTP 409 (Conflict) 응답 — 이미 처리된 상태, 동의 미완료, 위치 반경 밖 등
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(
+            IllegalStateException ex,
+            WebRequest request) {
+
+        log.warn("처리할 수 없는 상태: {}", ex.getMessage());
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage(),
+                LocalDateTime.now(),
+                request.getDescription(false).replace("uri=", "")
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(errorResponse);
+    }
+
+    /**
      * NoResourceFoundException 처리
      * WebSocket 등의 정적 리소스 404 에러를 조용히 처리
      * HTTP 404 (Not Found) 응답

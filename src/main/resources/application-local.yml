@@ -33,7 +33,7 @@ spring:
 # 출석 관련 설정
 attendance:
   location:
-    radius: 100  # 출석 가능 반경 (미터)
+    radius: 500  # 출석 가능 반경 (미터)
 
 # WebSocket CORS (로컬 개발 환경)
 app:
