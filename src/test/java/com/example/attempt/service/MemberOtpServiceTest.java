@@ -38,21 +38,28 @@ class MemberOtpServiceTest {
     }
 
     @Test
-    void verifyOtp_returnsTrue_forCorrectCode() {
-        // 실제 서비스가 생성한 해시와 동일한 알고리즘으로 직접 검증 가능하도록,
-        // requestOtp가 저장한 코드를 캡처해서 그대로 verifyOtp에 사용한다.
-        ArgumentCaptor<MemberOtpCode> captor = ArgumentCaptor.forClass(MemberOtpCode.class);
+    void verifyOtp_returnsTrue_forCorrectCode_andFalse_forWrongCode() {
+        // requestOtp가 저장하는 해시(캡처)와 SMS로 발송하는 평문 코드(캡처)는 같은 요청에서
+        // 나온 한 쌍이므로, SMS 본문에서 평문 코드를 추출해 실제 "정답 코드가 통과하는지"를
+        // 검증한다. 서비스의 해시 알고리즘을 테스트에서 재구현하지 않고도 성공 경로를 검증할 수 있다.
+        ArgumentCaptor<MemberOtpCode> otpCaptor = ArgumentCaptor.forClass(MemberOtpCode.class);
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+
         service.requestOtp("01099998888");
-        verify(repository).save(captor.capture());
-        MemberOtpCode saved = captor.getValue();
+
+        verify(repository).save(otpCaptor.capture());
+        verify(smsService).sendCustomMessage(eq("01099998888"), messageCaptor.capture());
+
+        MemberOtpCode saved = otpCaptor.getValue();
+        String sentMessage = messageCaptor.getValue();
+        String actualCode = sentMessage.replaceAll(".*인증번호는 (\\d+) .*", "$1");
+        assertEquals(6, actualCode.length());
 
         when(repository.findTopByPhoneNumberOrderByCreatedAtDesc("01099998888"))
                 .thenReturn(Optional.of(saved));
 
-        // 발송된 원본 코드를 알 수 없으므로, 이 테스트는 잘못된 코드가 거부되는 것만 검증한다.
-        boolean result = service.verifyOtp("01099998888", "000000");
-
-        assertFalse(result);
+        assertTrue(service.verifyOtp("01099998888", actualCode));
+        assertFalse(service.verifyOtp("01099998888", "000000"));
     }
 
     @Test
