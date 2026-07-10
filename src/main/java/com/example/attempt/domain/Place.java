@@ -38,6 +38,10 @@ public class Place {
     @Column(name = "description", length = 1000)
     private String description;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unit_type", length = 20)
+    private UnitType unitType;
+
 
     public Place(String name, String address, Double latitude, Double longitude) {
         this.name = name;

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 /***
@@ -35,6 +36,12 @@ public class Member {
 
     @Embedded
     private Unit unit;
+
+    @Column(name = "location_consent_agreed_at")
+    private LocalDateTime locationConsentAgreedAt;
+
+    @Column(name = "assigned_place_id")
+    private Long assignedPlaceId;
 
     public Member(String username, String phoneNumber) {
         this.username = username;
