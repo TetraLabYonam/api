@@ -1,8 +1,10 @@
 package com.example.attempt.controller;
 
 import com.example.attempt.domain.UnitType;
+import com.example.attempt.dto.place.PlaceSearchFallbackRequest;
 import com.example.attempt.dto.place.PlaceSummaryDto;
 import com.example.attempt.service.PlaceSearchService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,5 +24,10 @@ public class PlaceController {
             return placeSearchService.listByUnitType(unitType);
         }
         return placeSearchService.search(unitType, q);
+    }
+
+    @PostMapping("/search/fallback")
+    public List<PlaceSummaryDto> searchFallback(@Valid @RequestBody PlaceSearchFallbackRequest request) {
+        return placeSearchService.searchWithFallback(request.getUnitType(), request.getQ());
     }
 }

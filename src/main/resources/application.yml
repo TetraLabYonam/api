@@ -56,6 +56,12 @@ member-otp:
   code-length: 6
   hash-secret: ${MEMBER_OTP_HASH_SECRET:}
 
+# LLM 폴백 검색 설정 (미설정 시 폴백 비활성화, 1단계 검색만 동작)
+llm:
+  provider:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: claude-haiku-4-5-20251001
+
 # 출석 관련 설정
 attendance:
   location:
