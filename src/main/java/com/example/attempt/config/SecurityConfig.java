@@ -41,7 +41,7 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                     // 인증 불필요 엔드포인트
-                    .requestMatchers("/api/auth/**", "/api/devices/register", "/ws/**", "/actuator/health").permitAll()
+                    .requestMatchers("/api/auth/**", "/api/v1/member-auth/**", "/api/devices/register", "/ws/**", "/actuator/health").permitAll()
                     // 읽기 전용 API는 인증 불필요
                     .requestMatchers(HttpMethod.GET, "/api/place/**", "/api/v1/member/**", "/api/v1/places/**").permitAll()
                     // 관리자 전용 API
