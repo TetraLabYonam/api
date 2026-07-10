@@ -1,9 +1,9 @@
 package com.example.attempt.service.impl;
 
 import com.example.attempt.repository.RefreshTokenRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class RefreshTokenCleanupJob {
@@ -15,8 +15,11 @@ public class RefreshTokenCleanupJob {
     }
 
     // Run every day at 03:00
+    // @Transactional is required here: @Scheduled methods run outside any
+    // surrounding transaction, and the @Modifying bulk delete needs one.
     @Scheduled(cron = "0 0 3 * * *")
+    @Transactional
     public void cleanupExpired() {
-        repository.deleteByUsernameAndExpiresAtBefore("__ALL__", java.time.LocalDateTime.now());
+        repository.deleteByExpiresAtBefore(java.time.LocalDateTime.now());
     }
 }
