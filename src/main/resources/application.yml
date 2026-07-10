@@ -50,6 +50,12 @@ app:
     cors-origins: "https://example.com,http://localhost:3000,http://localhost:5173"
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173,http://10.0.2.2:8080,http://192.168.0.100:8080}
 
+# 참여자 SMS OTP 인증 설정
+member-otp:
+  ttl-seconds: 300
+  code-length: 6
+  hash-secret: ${MEMBER_OTP_HASH_SECRET:}
+
 # 출석 관련 설정
 attendance:
   location:
