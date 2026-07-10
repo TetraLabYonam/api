@@ -38,3 +38,6 @@ out/
 .vscode/
 
 application-API-KEY.properties
+
+### Superpowers scratch ###
+.superpowers/
