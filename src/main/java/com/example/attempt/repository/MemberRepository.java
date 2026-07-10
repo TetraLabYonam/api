@@ -40,4 +40,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
      */
     @Query("SELECT m FROM Member m WHERE m.unit.type = :unitType")
     List<Member> findByUnitType(@Param("unitType") String unitType);
+
+    /**
+     * 본인 일자리로 연결(assignedPlaceId)된 회원 조회
+     */
+    List<Member> findByAssignedPlaceId(Long assignedPlaceId);
 }

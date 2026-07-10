@@ -86,6 +86,8 @@ public class ScheduleService {
 
     /**
      * 참석 대상 회원 조회
+     * - 전체 회원 선택 시: 전체 회원
+     * - 그 외: 관리자가 명시적으로 선택한 회원/사업단 + 해당 Place에 본인 일자리로 연결(assignedPlaceId)된 회원을 자동 포함
      */
     private List<Member> getTargetMembers(ScheduleCreateRequest request) {
         // 전체 회원
@@ -110,6 +112,13 @@ public class ScheduleService {
                 members.addAll(unitMembers);
                 log.info("사업단 '{}' 회원 {}명 선택", unitName, unitMembers.size());
             }
+        }
+
+        // 본인 일자리로 이 Place를 연결해 둔 회원은 명시적 선택 여부와 무관하게 자동 포함
+        if (request.getPlaceId() != null) {
+            List<Member> assignedMembers = memberRepository.findByAssignedPlaceId(request.getPlaceId());
+            members.addAll(assignedMembers);
+            log.info("본인 일자리로 등록된 회원 {}명 자동 포함", assignedMembers.size());
         }
 
         return new ArrayList<>(members);
