@@ -18,7 +18,7 @@ public class JobKeywordSynonym {
     @JoinColumn(name = "PLACE_ID", nullable = false)
     private Place place;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "KEYWORD", nullable = false, length = 100)
     private String keyword;
 
     public JobKeywordSynonym(Place place, String keyword) {
