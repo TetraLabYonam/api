@@ -42,7 +42,6 @@ public class Place {
     @Column(name = "unit_type", length = 20)
     private UnitType unitType;
 
-
     public Place(String name, String address, Double latitude, Double longitude) {
         this.name = name;
         this.address = address;

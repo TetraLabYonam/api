@@ -1,7 +1,7 @@
 -- V3__add_unit_type_and_member_assignment.sql
-ALTER TABLE place ADD COLUMN unit_type VARCHAR(20) NULL;
+ALTER TABLE PLACE ADD COLUMN unit_type VARCHAR(20) NULL;
 
-ALTER TABLE member ADD COLUMN location_consent_agreed_at TIMESTAMP NULL;
-ALTER TABLE member ADD COLUMN assigned_place_id BIGINT NULL;
-ALTER TABLE member ADD CONSTRAINT fk_member_assigned_place
-    FOREIGN KEY (assigned_place_id) REFERENCES place(place_id) ON DELETE SET NULL;
+ALTER TABLE MEMBER ADD COLUMN location_consent_agreed_at TIMESTAMP NULL;
+ALTER TABLE MEMBER ADD COLUMN assigned_place_id BIGINT NULL;
+ALTER TABLE MEMBER ADD CONSTRAINT FK_MEMBER_ASSIGNED_PLACE
+    FOREIGN KEY (assigned_place_id) REFERENCES PLACE(PLACE_ID) ON DELETE SET NULL;
