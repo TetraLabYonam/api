@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "job_keyword_synonym")
+@Table(name = "JOB_KEYWORD_SYNONYM")
 @Getter
 @NoArgsConstructor
 public class JobKeywordSynonym {
@@ -15,7 +15,7 @@ public class JobKeywordSynonym {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "place_id", nullable = false)
+    @JoinColumn(name = "PLACE_ID", nullable = false)
     private Place place;
 
     @Column(nullable = false, length = 100)
