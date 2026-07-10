@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 사업단 유형별 일자리(Place) 검색
@@ -67,7 +69,10 @@ public class PlaceSearchService {
         }
 
         List<PlaceSummaryDto> candidates = listByUnitType(unitType);
+        Set<Long> candidateIds = candidates.stream().map(PlaceSummaryDto::getId).collect(Collectors.toSet());
+
         return llmJobSearchClient.get().pickBestMatch(freeText, candidates)
+                .filter(candidateIds::contains)
                 .flatMap(placeRepository::findById)
                 .map(this::toDto)
                 .map(List::of)
