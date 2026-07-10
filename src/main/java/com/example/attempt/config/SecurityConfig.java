@@ -1,6 +1,7 @@
 package com.example.attempt.config;
 
 import com.example.attempt.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,11 +44,20 @@ public class SecurityConfig {
                     // 인증 불필요 엔드포인트
                     .requestMatchers("/api/auth/**", "/api/v1/member-auth/**", "/api/devices/register", "/ws/**", "/actuator/health").permitAll()
                     // 읽기 전용 API는 인증 불필요
-                    .requestMatchers(HttpMethod.GET, "/api/place/**", "/api/v1/member/**", "/api/v1/places/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/place/**", "/api/v1/member/**").permitAll()
+                    // 회원 본인 서비스 및 장소 검색 API는 MEMBER 권한 필요
+                    .requestMatchers("/api/v1/members/me/**", "/api/v1/places/**", "/api/v1/attend/**").hasRole("MEMBER")
                     // 관리자 전용 API
                     .requestMatchers("/api/v1/admin/**", "/api/v1/rooms/**").hasRole("ADMIN")
                     // 그 외 모든 요청은 인증 필요
                     .anyRequest().authenticated()
+            )
+            // 인증되지 않은 요청은 401(Unauthorized)로 응답한다.
+            // (미설정 시 Spring Security 기본 진입점이 403을 반환해 "미인증"과
+            //  "인증됐지만 권한 부족"을 구분할 수 없다.)
+            .exceptionHandling(exceptions -> exceptions
+                    .authenticationEntryPoint((request, response, authException) ->
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
             );
 
         // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 추가
