@@ -3,7 +3,6 @@ package com.example.attempt.controller;
 import com.example.attempt.domain.Member;
 import com.example.attempt.dto.memberauth.OtpRequestRequest;
 import com.example.attempt.dto.memberauth.OtpVerifyRequest;
-import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.MemberRepository;
 import com.example.attempt.security.JwtTokenProvider;
 import com.example.attempt.service.MemberOtpService;
@@ -85,8 +84,11 @@ public class MemberAuthController {
         }
 
         String phoneNumber = optPhoneNumber.get();
-        Member member = memberRepository.findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("인증된 회원을 찾을 수 없습니다. phoneNumber=" + phoneNumber));
+        Optional<Member> optMember = memberRepository.findByPhoneNumber(phoneNumber);
+        if (optMember.isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
+        }
+        Member member = optMember.get();
 
         String accessToken = jwtTokenProvider.createAccessToken(
                 member.getPhoneNumber(),
