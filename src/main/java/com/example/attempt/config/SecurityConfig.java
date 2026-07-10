@@ -43,7 +43,7 @@ public class SecurityConfig {
                     // 인증 불필요 엔드포인트
                     .requestMatchers("/api/auth/**", "/api/devices/register", "/ws/**", "/actuator/health").permitAll()
                     // 읽기 전용 API는 인증 불필요
-                    .requestMatchers(HttpMethod.GET, "/api/place/**", "/api/v1/member/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/place/**", "/api/v1/member/**", "/api/v1/places/**").permitAll()
                     // 관리자 전용 API
                     .requestMatchers("/api/v1/admin/**", "/api/v1/rooms/**").hasRole("ADMIN")
                     // 그 외 모든 요청은 인증 필요
