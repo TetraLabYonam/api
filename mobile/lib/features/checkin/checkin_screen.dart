@@ -20,6 +20,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     try {
       final permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
         setState(() => _resultMessage = '위치 권한이 필요합니다. 설정에서 위치 권한을 허용해주세요.');
         return;
       }
@@ -31,6 +32,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
         latitude: position.latitude,
         longitude: position.longitude,
       );
+      if (!mounted) return;
       setState(() => _resultMessage = result.message);
     } catch (e) {
       if (mounted) {
