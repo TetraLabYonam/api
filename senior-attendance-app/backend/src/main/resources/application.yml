@@ -64,6 +64,8 @@ llm:
 attendance:
   location:
     radius: 500  # 출석 가능 반경 (미터)
+  late:
+    grace-minutes: 10  # 지각 판정 유예 시간 (분) — 시작시간 + 이 값까지는 정시로 인정
 
 # JWT 인증 설정
 jwt:

@@ -8,7 +8,6 @@ import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
 import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.AttendRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,20 +19,24 @@ import java.time.LocalTime;
  * 출석 관리 서비스
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
 @Slf4j
 public class AttendService {
 
     private final AttendRepository attendRepository;
     private final SmsService smsService;
+    private final int locationRadius;
+    private final int lateGraceMinutes;
 
-    /**
-     * 위치 검증 반경 (미터)
-     * application.yml에서 설정 가능, 기본값 100m
-     */
-    @Value("${attendance.location.radius:100}")
-    private int locationRadius;
+    public AttendService(AttendRepository attendRepository,
+                          SmsService smsService,
+                          @Value("${attendance.location.radius:100}") int locationRadius,
+                          @Value("${attendance.late.grace-minutes:10}") int lateGraceMinutes) {
+        this.attendRepository = attendRepository;
+        this.smsService = smsService;
+        this.locationRadius = locationRadius;
+        this.lateGraceMinutes = lateGraceMinutes;
+    }
 
     /**
      * 출석 체크인
@@ -184,7 +187,7 @@ public class AttendService {
     }
 
     /**
-     * 지각 여부 판단
+     * 지각 여부 판단 — 시작 시간 + 유예시간(lateGraceMinutes)까지는 정시로 인정한다
      */
     private boolean isLate(Schedule schedule) {
         if (schedule.getStartTime() == null) {
@@ -192,9 +195,9 @@ public class AttendService {
         }
 
         LocalTime now = LocalTime.now();
-        LocalTime startTime = schedule.getStartTime();
+        LocalTime lateThreshold = schedule.getStartTime().plusMinutes(lateGraceMinutes);
 
-        return now.isAfter(startTime);
+        return now.isAfter(lateThreshold);
     }
 
     /**
