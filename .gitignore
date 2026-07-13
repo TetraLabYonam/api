@@ -1,5 +1,3 @@
-src/main/resources/markDown/*
-!src/main/resources/markDown/FRONTEND_INTEGRATION_GUIDE.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
