@@ -58,12 +58,12 @@ senior/  (저장소 루트)
 | `Place`, `Schedule`, `Attend`, `AttendStatus`, `Member`, `MemberOtpCode`, `UnitType`, `JobKeywordSynonym`, `Unit` | → `senior-attendance-app/backend/` | 정상 작동 중 |
 | `PlaceController`, `MemberAuthController`, `MemberSelfController`, `AttendController` | → `senior-attendance-app/backend/` | 정상 작동 중 |
 | `PlaceSearchService`, `LlmJobSearchClient`, `MemberOtpService`, `CurrentMemberService`, `ScheduleService`, `AttendService` | → `senior-attendance-app/backend/` | 정상 작동 중 |
-| `SmsService`, `DeviceController` | → `senior-attendance-app/backend/` | OTP 발송에 사용 |
+| `SmsService` | → `senior-attendance-app/backend/` | OTP 발송에 사용 |
 | `mobile/` (Flutter 전체) | → `senior-attendance-app/mobile/` | 정상 작동 중 |
 | `docs/superpowers/` (지난 세션 스펙·플랜·리뷰 산출물) | → `senior-attendance-app/docs/` | 시니어 근태관리 전용 문서 |
-| `Room`, `TicketIssuance`, `RoomService`, `QueueService`, `TicketService`, `WebSocketService`, `RoomRepository`, `TicketIssuanceRepository`, 관련 DTO | → `queue-app/backend/` (참고용) | 아래 신규 스키마로 교체 예정, 컨트롤러는 애초에 없음 |
+| `Room`, `TicketIssuance`, `RoomService`, `QueueService`, `TicketService`, `WebSocketService`, `RoomRepository`, `TicketIssuanceRepository`, `DeviceController`, `WebSocketConfig`, `WebSocketAuthInterceptor`, `RedisConfig`, 관련 DTO | → `queue-app/backend/` (참고용) | 아래 신규 스키마로 교체 예정, 컨트롤러는 애초에 없음. `DeviceController`는 이름과 달리 `TicketIssuanceRepository`를 직접 참조하는 번호표 전용 코드이고, `WebSocketConfig`/`WebSocketAuthInterceptor`/`RedisConfig`는 번호표 실시간 업데이트 전용 인프라다 (계획 작성 단계의 파일 감사에서 확정) |
 | `frontend/` 전체 (React) | 저장소에서 삭제 | 두 시스템 다 목표 클라이언트가 아님 |
-| `MemberService`, `PlaceService`, `PlaceCrawlingService`, `ExcelService` (삭제된 구버전 컨트롤러가 쓰던 서비스 계층) | 버림 (이관 안 함) | 신규 서비스(`CurrentMemberService`/`PlaceSearchService` 등)가 실질적으로 대체 |
+| `MemberService`, `PlaceService`, `PlaceCrawlingService`, `ExcelService` (삭제된 구버전 컨트롤러가 쓰던 서비스 계층), `DataInitializer` | 버림 (이관 안 함) | 신규 서비스(`CurrentMemberService`/`PlaceSearchService` 등)가 실질적으로 대체. `DataInitializer`는 폐기 대상인 `PlaceCrawlingService`의 유일한 소비자라 함께 폐기 (관광지 데모 데이터를 시딩하던 레거시 프로토타입 코드) |
 | `Admin`, `AuthController`, `RefreshToken`, `RefreshTokenService`/`Impl`, `RefreshTokenCleanupJob`, `SecurityConfig`, `JwtTokenProvider`, `JwtAuthenticationFilter` | 양쪽에 **각각 독립적으로 복제** | 아래 "관리자 인증 분리" 참고 |
 
 ## 관리자 인증 분리
