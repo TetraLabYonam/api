@@ -42,3 +42,6 @@ application-API-KEY.properties
 
 ### p6spy test log ###
 spy.log
+
+### git worktrees (superpowers:using-git-worktrees) ###
+.worktrees/
