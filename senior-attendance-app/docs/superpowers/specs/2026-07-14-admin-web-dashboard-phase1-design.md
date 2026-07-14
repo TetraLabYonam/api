@@ -47,8 +47,9 @@ senior-attendance-app/
    ```
 
 4. **신규 `AdminAttendanceService`**:
-   - `period`(`today`/`week`/`month`) 파라미터를 `LocalDate` 범위로 변환 (오늘: 당일, 이번주: 월요일~오늘 또는 해당 주 전체 — 구현 시 "이번 주 시작~오늘"로 확정, 이번달: 1일~오늘)
+   - `period`(`today`/`week`/`month`) 파라미터를 `LocalDate` 범위로 변환: `today`는 당일 하루, `week`는 이번 주 월요일(ISO 기준, `DayOfWeek.MONDAY`)부터 오늘까지, `month`는 이번 달 1일부터 오늘까지.
    - 위 쿼리 결과를 `UnitType`별로 묶어 출석률(%)을 계산: `(PRESENT + LATE) / 전체 * 100`. 이는 `Schedule.getAttendanceRate()`와 동일한 정의를 재사용한다.
+   - 응답의 `label` 필드는 하드코딩하지 않고 `UnitType.getDescription()`을 그대로 사용한다 (한글 라벨이 두 곳에서 따로 관리되지 않도록).
    - `UnitType.values()` 3종을 항상 결과에 포함시킨다 (데이터가 없는 유형은 0%로 채움) — 프론트가 빈 배열/누락 유형을 별도 처리하지 않아도 되게 한다.
 
 5. **신규 `AdminAttendanceController`**:
