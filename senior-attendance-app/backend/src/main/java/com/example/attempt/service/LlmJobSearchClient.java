@@ -4,6 +4,7 @@ import com.example.attempt.dto.place.PlaceSummaryDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpEntity;
@@ -31,15 +32,24 @@ import java.util.Optional;
 @Slf4j
 public class LlmJobSearchClient {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final String apiKey;
     private final String model;
 
+    @Autowired
     public LlmJobSearchClient(@Value("${llm.provider.api-key}") String apiKey,
                                @Value("${llm.provider.model:claude-haiku-4-5-20251001}") String model) {
+        this(apiKey, model, new RestTemplate());
+    }
+
+    // 테스트에서 RestTemplate을 mock으로 교체하기 위한 생성자.
+    // PlaceSearchService와 동일한 이유로 생성자가 2개라, Spring이 실제로 쓸 생성자를
+    // @Autowired로 명시한다.
+    LlmJobSearchClient(String apiKey, String model, RestTemplate restTemplate) {
         this.apiKey = apiKey;
         this.model = model;
+        this.restTemplate = restTemplate;
     }
 
     public Optional<Long> pickBestMatch(String freeText, List<PlaceSummaryDto> candidates) {
