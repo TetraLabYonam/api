@@ -29,4 +29,11 @@ void main() {
 
     expect(find.text('${UnitType.market.label} 일자리 찾기'), findsOneWidget);
   });
+
+  testWidgets('질문 문구와 이전 버튼이 보인다', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: UnitSelectionScreen()));
+
+    expect(find.text('사업단을 선택해주세요'), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, '이전'), findsOneWidget);
+  });
 }
