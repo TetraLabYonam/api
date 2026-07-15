@@ -6,6 +6,7 @@ import com.example.attempt.domain.Place;
 import com.example.attempt.domain.Schedule;
 import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
+import com.example.attempt.dto.attend.AttendTodayResponse;
 import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.AttendRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -121,11 +122,13 @@ public class AttendService {
 
     /**
      * 로그인한 회원의 오늘 Attend를 조회한다. 하루 여러 건이면 첫 건만 사용한다(통상 1건).
+     * 트랜잭션이 열려 있는 동안 지연 로딩되는 schedule/place까지 매핑하여 반환한다.
      */
-    public Optional<Attend> findTodayAttend(Long memberId) {
+    public AttendTodayResponse findTodayAttend(Long memberId) {
         LocalDate today = LocalDate.now();
         List<Attend> attends = attendRepository.findByMemberIdAndDateRange(memberId, today, today);
-        return attends.stream().findFirst();
+        Optional<Attend> attend = attends.stream().findFirst();
+        return attend.map(AttendTodayResponse::of).orElseGet(AttendTodayResponse::none);
     }
 
     /**

@@ -6,6 +6,7 @@ import com.example.attempt.domain.Place;
 import com.example.attempt.domain.Schedule;
 import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
+import com.example.attempt.dto.attend.AttendTodayResponse;
 import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.AttendRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -160,10 +161,11 @@ class AttendServiceTest {
         when(attendRepository.findByMemberIdAndDateRange(eq(100L), any(), any()))
                 .thenReturn(List.of(attend));
 
-        Optional<Attend> result = service.findTodayAttend(100L);
+        AttendTodayResponse response = service.findTodayAttend(100L);
 
-        assertTrue(result.isPresent());
-        assertEquals(attend, result.get());
+        assertTrue(response.isHasSchedule());
+        assertEquals(schedule.getId(), response.getScheduleId());
+        assertEquals("공원안전지킴이", response.getPlaceName());
     }
 
     @Test
@@ -171,8 +173,8 @@ class AttendServiceTest {
         when(attendRepository.findByMemberIdAndDateRange(eq(100L), any(), any()))
                 .thenReturn(List.of());
 
-        Optional<Attend> result = service.findTodayAttend(100L);
+        AttendTodayResponse response = service.findTodayAttend(100L);
 
-        assertTrue(result.isEmpty());
+        assertFalse(response.isHasSchedule());
     }
 }

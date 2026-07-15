@@ -9,7 +9,6 @@ import com.example.attempt.service.AttendService;
 import com.example.attempt.service.CurrentMemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -39,11 +38,8 @@ public class AttendController {
     }
 
     @GetMapping("/today")
-    @Transactional(readOnly = true)
     public AttendTodayResponse today() {
         Member member = currentMemberService.getCurrentMember();
-        return attendService.findTodayAttend(member.getId())
-                .map(AttendTodayResponse::of)
-                .orElseGet(AttendTodayResponse::none);
+        return attendService.findTodayAttend(member.getId());
     }
 }
