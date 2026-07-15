@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../design_system/atm_bottom_action_bar.dart';
+import '../../design_system/atm_colors.dart';
+import '../../design_system/atm_numeric_keypad.dart';
 import 'auth_provider.dart';
 
 class OtpVerifyScreen extends ConsumerStatefulWidget {
@@ -12,12 +15,22 @@ class OtpVerifyScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
-  final _codeController = TextEditingController();
+  String _code = '';
   String? _error;
+
+  void _onDigit(String digit) {
+    if (_code.length >= 6) return;
+    setState(() => _code += digit);
+  }
+
+  void _onBackspace() {
+    if (_code.isEmpty) return;
+    setState(() => _code = _code.substring(0, _code.length - 1));
+  }
 
   Future<void> _verify() async {
     try {
-      await ref.read(authRepositoryProvider).verifyOtp(widget.phoneNumber, _codeController.text);
+      await ref.read(authRepositoryProvider).verifyOtp(widget.phoneNumber, _code);
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil('/unit-selection', (route) => false);
     } catch (e) {
@@ -29,20 +42,54 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('인증번호 입력')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            TextField(
-              controller: _codeController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: '인증번호 6자리'),
+      body: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 24, 20, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('문자로 받은 번호\n6자리를 입력해주세요',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black)),
             ),
-            if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _verify, child: const Text('확인')),
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: List.generate(6, (i) {
+                final filled = i < _code.length;
+                return Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: filled ? AtmColors.primary : Colors.grey, width: 2),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(filled ? _code[i] : '',
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  ),
+                );
+              }),
+            ),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Text(_error!, style: const TextStyle(color: Colors.red)),
+            ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: AtmNumericKeypad(
+              onDigit: _onDigit,
+              onBackspace: _onBackspace,
+              onConfirm: _code.length == 6 ? _verify : null,
+              confirmLabel: '확인',
+            ),
+          ),
+          const Spacer(),
+          AtmBottomActionBar.single(label: '이전', onPressed: () => Navigator.of(context).maybePop()),
+        ],
       ),
     );
   }
