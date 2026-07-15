@@ -14,8 +14,8 @@ public class AdminDataInitializer {
     @Bean
     CommandLineRunner createAdminIfNotExist(AdminRepository adminRepository,
                                            PasswordEncoder passwordEncoder,
-                                           @Value("${app.default-admin.username:admin}") String defaultAdmin,
-                                           @Value("${app.default-admin.password:admin}") String defaultPassword) {
+                                           @Value("${app.default-admin.username:admin@example.com}") String defaultAdmin,
+                                           @Value("${app.default-admin.password:1234}") String defaultPassword) {
         return args -> {
             if (!adminRepository.existsByUsername(defaultAdmin)) {
                 Admin admin = new Admin(defaultAdmin, passwordEncoder.encode(defaultPassword));

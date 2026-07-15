@@ -25,7 +25,7 @@ class AuthControllerIntegrationTest {
         String base = "http://localhost:" + port + "/api/auth";
 
         // Ensure an admin exists (AdminDataInitializer should create one in tests)
-        Map<String, String> body = Map.of("username", "admin", "password", "admin");
+        Map<String, String> body = Map.of("username", "admin@example.com", "password", "1234");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
