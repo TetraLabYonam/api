@@ -1,5 +1,31 @@
 import 'package:dio/dio.dart';
 
+class TodayAttend {
+  final bool hasSchedule;
+  final int? scheduleId;
+  final String? placeName;
+  final String? startTime;
+  final String? endTime;
+
+  TodayAttend({
+    required this.hasSchedule,
+    this.scheduleId,
+    this.placeName,
+    this.startTime,
+    this.endTime,
+  });
+
+  factory TodayAttend.fromJson(Map<String, dynamic> json) {
+    return TodayAttend(
+      hasSchedule: json['hasSchedule'] as bool? ?? false,
+      scheduleId: json['scheduleId'] as int?,
+      placeName: json['placeName'] as String?,
+      startTime: json['startTime'] as String?,
+      endTime: json['endTime'] as String?,
+    );
+  }
+}
+
 class CheckinResult {
   final bool success;
   final String message;
@@ -11,6 +37,11 @@ class CheckinRepository {
   final Dio dio;
 
   CheckinRepository({required this.dio});
+
+  Future<TodayAttend> getTodayAttend() async {
+    final response = await dio.get('/api/v1/attend/today');
+    return TodayAttend.fromJson(response.data as Map<String, dynamic>);
+  }
 
   Future<CheckinResult> checkIn({
     required int scheduleId,
