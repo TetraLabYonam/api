@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/unit_type.dart';
+import '../../design_system/atm_bottom_action_bar.dart';
+import '../../design_system/atm_option_list_item.dart';
 import '../auth/auth_provider.dart';
 import '../consent/consent_screen.dart';
 import 'job_repository.dart';
@@ -108,8 +110,16 @@ class _JobSearchScreenState extends ConsumerState<JobSearchScreen> {
       appBar: AppBar(title: Text('${widget.unitType.label} 일자리 찾기')),
       body: Column(
         children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('어떤 일을 하시나요?',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 Expanded(
@@ -141,15 +151,22 @@ class _JobSearchScreenState extends ConsumerState<JobSearchScreen> {
               itemCount: _results.length,
               itemBuilder: (context, index) {
                 final place = _results[index];
-                return ListTile(
-                  title: Text(place.name),
-                  subtitle: Text(place.address),
-                  onTap: _loading ? null : () => _select(place),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                  child: AtmOptionListItem(
+                    title: place.name,
+                    subtitle: place.address,
+                    onTap: _loading ? null : () => _select(place),
+                  ),
                 );
               },
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: AtmBottomActionBar.single(
+        label: '이전',
+        onPressed: () => Navigator.of(context).maybePop(),
       ),
     );
   }
