@@ -4,10 +4,12 @@ import com.example.attempt.domain.Member;
 import com.example.attempt.dto.attend.AttendCheckInApiRequest;
 import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
+import com.example.attempt.dto.attend.AttendTodayResponse;
 import com.example.attempt.service.AttendService;
 import com.example.attempt.service.CurrentMemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -34,5 +36,14 @@ public class AttendController {
                 .build();
 
         return attendService.checkIn(serviceRequest);
+    }
+
+    @GetMapping("/today")
+    @Transactional(readOnly = true)
+    public AttendTodayResponse today() {
+        Member member = currentMemberService.getCurrentMember();
+        return attendService.findTodayAttend(member.getId())
+                .map(AttendTodayResponse::of)
+                .orElseGet(AttendTodayResponse::none);
     }
 }

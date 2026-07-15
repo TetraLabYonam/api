@@ -1,6 +1,16 @@
 package com.example.attempt.controller;
 
+import com.example.attempt.domain.Attend;
+import com.example.attempt.domain.AttendStatus;
+import com.example.attempt.domain.Member;
+import com.example.attempt.domain.Place;
+import com.example.attempt.domain.Schedule;
+import com.example.attempt.repository.AttendRepository;
+import com.example.attempt.repository.MemberRepository;
+import com.example.attempt.repository.PlaceRepository;
+import com.example.attempt.repository.ScheduleRepository;
 import com.example.attempt.service.SmsService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +20,8 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +39,30 @@ class AttendControllerIntegrationTest {
 
     @MockBean
     SmsService smsService;
+
+    @Autowired
+    AttendRepository attendRepository;
+
+    @Autowired
+    ScheduleRepository scheduleRepository;
+
+    @Autowired
+    PlaceRepository placeRepository;
+
+    @Autowired
+    MemberRepository memberRepository;
+
+    /**
+     * today_withScheduledAttendToday_returnsScheduleInfo()가 만든 Attend/Schedule/Place fixture는
+     * 다른 통합 테스트 클래스와 DB를 공유하므로, 남겨두면 PlaceControllerIntegrationTest의
+     * placeRepository.deleteAll()이 FK 제약 위반으로 실패한다. 매 테스트 뒤 정리한다.
+     */
+    @AfterEach
+    void cleanUpAttendFixtures() {
+        attendRepository.deleteAll();
+        scheduleRepository.deleteAll();
+        placeRepository.deleteAll();
+    }
 
     @Test
     void checkIn_withoutAuth_returns401() {
@@ -79,5 +115,63 @@ class AttendControllerIntegrationTest {
                 "http://localhost:" + port + "/api/v1/attend/check-in", req, Object.class);
 
         assertEquals(409, resp.getStatusCodeValue());
+    }
+
+    private HttpHeaders authHeaders(String accessToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(accessToken);
+        return headers;
+    }
+
+    @Test
+    void today_withoutAuth_returns401() {
+        ResponseEntity<Object> resp = restTemplate.getForEntity(
+                "http://localhost:" + port + "/api/v1/attend/today", Object.class);
+
+        assertEquals(401, resp.getStatusCodeValue());
+    }
+
+    @Test
+    void today_withoutScheduleToday_returnsHasScheduleFalse() {
+        String accessToken = obtainMemberAccessToken("01066667777");
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "http://localhost:" + port + "/api/v1/attend/today",
+                HttpMethod.GET, new HttpEntity<>(authHeaders(accessToken)), Map.class);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        assertEquals(false, resp.getBody().get("hasSchedule"));
+    }
+
+    @Test
+    void today_withScheduledAttendToday_returnsScheduleInfo() {
+        String phoneNumber = "01055556666";
+        String accessToken = obtainMemberAccessToken(phoneNumber);
+        Member member = memberRepository.findByPhoneNumber(phoneNumber).orElseThrow();
+
+        Place place = placeRepository.save(new Place("중앙공원", "주소", 35.3, 129.0));
+        Schedule schedule = scheduleRepository.save(Schedule.builder()
+                .title("오전 근무")
+                .scheduleDate(LocalDate.now())
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(13, 0))
+                .place(place)
+                .build());
+        attendRepository.save(Attend.builder()
+                .member(member)
+                .schedule(schedule)
+                .status(AttendStatus.SCHEDULED)
+                .build());
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "http://localhost:" + port + "/api/v1/attend/today",
+                HttpMethod.GET, new HttpEntity<>(authHeaders(accessToken)), Map.class);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        assertEquals(true, resp.getBody().get("hasSchedule"));
+        assertEquals("중앙공원", resp.getBody().get("placeName"));
+        assertEquals("09:00", resp.getBody().get("startTime"));
+        assertEquals("13:00", resp.getBody().get("endTime"));
     }
 }
