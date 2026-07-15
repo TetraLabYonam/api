@@ -29,6 +29,33 @@ void main() {
     expect(result.success, isFalse);
     expect(result.message, contains('허용 반경'));
   });
+
+  test('getTodayAttend parses hasSchedule=true response', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = _FakeAdapter(
+      '{"hasSchedule":true,"scheduleId":12,"placeName":"중앙공원","startTime":"09:00","endTime":"13:00"}',
+    );
+    final repository = CheckinRepository(dio: dio);
+
+    final today = await repository.getTodayAttend();
+
+    expect(today.hasSchedule, isTrue);
+    expect(today.scheduleId, 12);
+    expect(today.placeName, '중앙공원');
+    expect(today.startTime, '09:00');
+    expect(today.endTime, '13:00');
+  });
+
+  test('getTodayAttend parses hasSchedule=false response', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = _FakeAdapter('{"hasSchedule":false}');
+    final repository = CheckinRepository(dio: dio);
+
+    final today = await repository.getTodayAttend();
+
+    expect(today.hasSchedule, isFalse);
+    expect(today.scheduleId, isNull);
+  });
 }
 
 class _FakeAdapter implements HttpClientAdapter {

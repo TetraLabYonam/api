@@ -17,6 +17,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('로그인'), findsOneWidget);
-    expect(find.text('인증번호 받기'), findsOneWidget);
+    expect(find.text('인증받기'), findsOneWidget);
   });
 }

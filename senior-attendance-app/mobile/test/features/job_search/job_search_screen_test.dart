@@ -97,4 +97,15 @@ void main() {
 
     expect(find.text('위치정보 수집 동의'), findsOneWidget);
   });
+
+  testWidgets('질문 문구와 이전 버튼이 보인다', (tester) async {
+    await tester.pumpWidget(_wrap(
+      const JobSearchScreen(unitType: UnitType.publicInterest),
+      (options) async => jsonResponse('[]'),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('어떤 일을 하시나요?'), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, '이전'), findsOneWidget);
+  });
 }
