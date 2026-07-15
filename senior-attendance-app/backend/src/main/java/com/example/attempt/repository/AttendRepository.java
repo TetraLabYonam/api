@@ -73,4 +73,15 @@ public interface AttendRepository extends JpaRepository<Attend, Long> {
     List<Object[]> getAttendanceStatsByScheduleId(@Param("scheduleId") Long scheduleId);
     boolean existsByMemberIdAndScheduleId(Long memberId, Long scheduleId);
     void deleteByMemberId(Long memberId);
+
+    /**
+     * 사업단 유형별·출석 상태별 집계 조회 (관리자 대시보드용)
+     */
+    @Query("SELECT p.unitType, a.status, COUNT(a) FROM Attend a " +
+           "JOIN a.schedule s JOIN s.place p " +
+           "WHERE s.scheduleDate BETWEEN :start AND :end " +
+           "GROUP BY p.unitType, a.status")
+    List<Object[]> getAttendanceStatsByUnitTypeAndDateRange(
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
 }
