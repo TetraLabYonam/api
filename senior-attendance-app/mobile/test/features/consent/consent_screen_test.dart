@@ -18,7 +18,7 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, '네'));
     await tester.pumpAndSettle();
 
-    expect(find.text('출석 체크'), findsNWidgets(2));
+    expect(find.text('출석 체크'), findsOneWidget);
   });
 
   testWidgets('제출 중 서버 오류가 나면 에러 안내를 보여주고 화면을 유지한다', (tester) async {
