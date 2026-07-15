@@ -11,12 +11,15 @@ import com.example.attempt.repository.AttendRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class AttendServiceTest {
@@ -148,5 +151,28 @@ class AttendServiceTest {
         AttendCheckInResponse response = service.checkIn(requestAt(35.3001, 129.0001));
 
         assertTrue(response.isSuccess());
+    }
+
+    @Test
+    void findTodayAttend_withScheduleToday_returnsIt() {
+        Schedule schedule = scheduleStartingAt(LocalTime.now(), placeAt(35.30, 129.00));
+        Attend attend = scheduledAttend(schedule);
+        when(attendRepository.findByMemberIdAndDateRange(eq(100L), any(), any()))
+                .thenReturn(List.of(attend));
+
+        Optional<Attend> result = service.findTodayAttend(100L);
+
+        assertTrue(result.isPresent());
+        assertEquals(attend, result.get());
+    }
+
+    @Test
+    void findTodayAttend_noScheduleToday_returnsEmpty() {
+        when(attendRepository.findByMemberIdAndDateRange(eq(100L), any(), any()))
+                .thenReturn(List.of());
+
+        Optional<Attend> result = service.findTodayAttend(100L);
+
+        assertTrue(result.isEmpty());
     }
 }

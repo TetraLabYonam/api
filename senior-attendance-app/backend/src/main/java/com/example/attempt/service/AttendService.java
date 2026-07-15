@@ -13,7 +13,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * 출석 관리 서비스
@@ -114,6 +117,15 @@ public class AttendService {
                 .distance(distance)
                 .success(true)
                 .build();
+    }
+
+    /**
+     * 로그인한 회원의 오늘 Attend를 조회한다. 하루 여러 건이면 첫 건만 사용한다(통상 1건).
+     */
+    public Optional<Attend> findTodayAttend(Long memberId) {
+        LocalDate today = LocalDate.now();
+        List<Attend> attends = attendRepository.findByMemberIdAndDateRange(memberId, today, today);
+        return attends.stream().findFirst();
     }
 
     /**
