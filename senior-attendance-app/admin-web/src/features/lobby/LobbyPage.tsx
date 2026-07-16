@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '../../api/client';
+import { useAuth } from '../auth/AuthContext';
 import type { Period, UnitTypeAttendanceSummary } from '../../types/attendance';
 import { PeriodSelector } from './PeriodSelector';
 import { UnitTypeCard } from './UnitTypeCard';
 
 export function LobbyPage() {
+  const { logout } = useAuth();
   const [period, setPeriod] = useState<Period>('today');
   const [data, setData] = useState<UnitTypeAttendanceSummary[] | null>(null);
   const [error, setError] = useState(false);
@@ -14,6 +16,10 @@ export function LobbyPage() {
     try {
       const res = await apiFetch(`/api/admin/attendance/summary?period=${period}`);
       if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          return;
+        }
         setError(true);
         return;
       }
@@ -21,7 +27,7 @@ export function LobbyPage() {
     } catch {
       setError(true);
     }
-  }, [period]);
+  }, [period, logout]);
 
   useEffect(() => {
     load();
