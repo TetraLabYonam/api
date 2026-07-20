@@ -164,6 +164,17 @@ class ScheduleServiceTest {
     }
 
     @Test
+    void startTimeEqualsEndTime_throwsIllegalArgumentException() {
+        CreateScheduleRequest request = baseRequest()
+                .startDate(LocalDate.of(2026, 7, 13))
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(9, 0))
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> service.createSchedules(request, admin));
+    }
+
+    @Test
     void multiDayWithoutDaysOfWeek_throwsIllegalArgumentException() {
         CreateScheduleRequest request = baseRequest()
                 .startDate(LocalDate.of(2026, 7, 6))
