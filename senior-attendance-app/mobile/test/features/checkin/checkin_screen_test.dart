@@ -113,6 +113,64 @@ void main() {
     expect(find.widgetWithText(ElevatedButton, '확인'), findsOneWidget);
   });
 
+  testWidgets('아니오를 누르면 결석 처리 API를 호출하고 결과 화면에 메시지를 보여준다', (tester) async {
+    bool declineCalled = false;
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        apiClientProvider.overrideWithValue(fakeApiClient((options) async {
+          if (options.path == '/api/v1/attend/today') {
+            return jsonResponse('{"hasSchedule":true,"scheduleId":1,"placeName":"중앙공원"}');
+          }
+          if (options.path == '/api/v1/attend/decline') {
+            declineCalled = true;
+            return jsonResponse('{"success":true,"message":"결석 처리되었습니다."}');
+          }
+          return jsonResponse('{}');
+        })),
+      ],
+      child: const MaterialApp(home: CheckinScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, '아니오'));
+    await tester.pumpAndSettle();
+
+    expect(declineCalled, isTrue);
+    expect(find.text('결석 처리되었습니다.'), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, '확인'), findsOneWidget);
+  });
+
+  testWidgets('결석 처리 API가 실패 응답을 반환하면 결과 화면에 서버 메시지를 보여준다', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        apiClientProvider.overrideWithValue(fakeApiClient((options) async {
+          if (options.path == '/api/v1/attend/today') {
+            return jsonResponse('{"hasSchedule":true,"scheduleId":1,"placeName":"중앙공원"}');
+          }
+          if (options.path == '/api/v1/attend/decline') {
+            return jsonResponse('{"message":"서버 오류"}', statusCode: 500);
+          }
+          return jsonResponse('{}');
+        })),
+      ],
+      child: const MaterialApp(home: CheckinScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, '아니오'));
+    await tester.pumpAndSettle();
+
+    // CheckinRepository.decline() already catches DioException internally and
+    // returns a CheckinResult(success: false, message: <server message>) — it
+    // never rethrows. So a 500 here surfaces through the same `_result` success
+    // screen as a normal decline, showing the server's message, not through
+    // `_errorMessage`. Only a non-Dio exception (not exercised by this fake
+    // adapter setup) would reach `_declineCheckIn()`'s own catch block.
+    expect(find.text('서버 오류'), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, '확인'), findsOneWidget);
+  });
+
   testWidgets('위치 서비스가 꺼져 있으면 위치 확인 실패 안내를 보여준다', (tester) async {
     GeolocatorPlatform.instance = _FakeGeolocatorPlatform(
       permission: LocationPermission.whileInUse,

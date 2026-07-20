@@ -17,6 +17,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
   bool _loadingToday = true;
   TodayAttend? _today;
   bool _checkingIn = false;
+  bool _declining = false;
   String? _errorMessage;
   CheckinResult? _result;
 
@@ -75,8 +76,26 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     }
   }
 
-  void _declineCheckIn() {
-    Navigator.of(context).maybePop();
+  Future<void> _declineCheckIn() async {
+    final scheduleId = _today?.scheduleId;
+    if (scheduleId == null || _declining) return;
+
+    setState(() {
+      _declining = true;
+      _errorMessage = null;
+    });
+    try {
+      final repo = CheckinRepository(dio: ref.read(apiClientProvider).dio);
+      final result = await repo.decline(scheduleId: scheduleId);
+      if (!mounted) return;
+      setState(() => _result = result);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = '결석 처리에 실패했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      if (mounted) setState(() => _declining = false);
+    }
   }
 
   @override
@@ -139,8 +158,8 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
               ),
             ),
       bottomNavigationBar: AtmBottomActionBar.confirm(
-        onYes: (canAct && !_checkingIn) ? _confirmCheckIn : null,
-        onNo: canAct ? _declineCheckIn : null,
+        onYes: (canAct && !_checkingIn && !_declining) ? _confirmCheckIn : null,
+        onNo: (canAct && !_checkingIn && !_declining) ? _declineCheckIn : null,
       ),
     );
   }
