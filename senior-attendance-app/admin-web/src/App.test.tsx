@@ -45,4 +45,17 @@ describe('App', () => {
 
     expect(await screen.findByRole('heading', { name: '사업단별 출석 현황' })).toBeInTheDocument();
   });
+
+  it('로그인 된 상태면 /attend-management 접근 시 일정별 출석 관리 화면이 보인다', async () => {
+    vi.mocked(client.refreshAccessToken).mockResolvedValue(true);
+    vi.mocked(client.apiFetch).mockResolvedValue(new Response(JSON.stringify([]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    window.history.pushState({}, '', '/attend-management');
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: '일정별 출석 관리' })).toBeInTheDocument();
+  });
 });

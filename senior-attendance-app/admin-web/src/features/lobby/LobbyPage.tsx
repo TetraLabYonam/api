@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiFetch } from '../../api/client';
 import { useAuth } from '../auth/AuthContext';
 import type { Period, UnitTypeAttendanceSummary } from '../../types/attendance';
@@ -36,6 +37,7 @@ export function LobbyPage() {
   return (
     <div>
       <h1>사업단별 출석 현황</h1>
+      <Link to="/attend-management">일정별 출석 관리</Link>
       <PeriodSelector value={period} onChange={setPeriod} />
       <button onClick={load}>새로고침</button>
       {error && (

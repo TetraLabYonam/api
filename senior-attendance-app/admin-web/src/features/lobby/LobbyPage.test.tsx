@@ -1,9 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { LobbyPage } from './LobbyPage';
 import * as client from '../../api/client';
 import * as authContext from '../auth/AuthContext';
+
+function renderLobbyPage() {
+  return render(
+    <MemoryRouter>
+      <LobbyPage />
+    </MemoryRouter>
+  );
+}
 
 vi.mock('../../api/client', async () => {
   const actual = await vi.importActual<typeof client>('../../api/client');
@@ -37,6 +46,21 @@ describe('LobbyPage', () => {
     });
   });
 
+  it('일정별 출석 관리 화면으로 가는 진입 링크를 보여준다', async () => {
+    vi.mocked(client.apiFetch).mockResolvedValue(
+      summaryResponse([
+        { unitType: 'PUBLIC_INTEREST', label: '공익형', attendanceRate: 87.3 },
+        { unitType: 'MARKET', label: '시장형', attendanceRate: 92.0 },
+        { unitType: 'SOCIAL_SERVICE', label: '사회서비스형', attendanceRate: 78.5 },
+      ])
+    );
+
+    renderLobbyPage();
+
+    const link = await screen.findByRole('link', { name: '일정별 출석 관리' });
+    expect(link).toHaveAttribute('href', '/attend-management');
+  });
+
   it('마운트 시 오늘 기준으로 조회해서 사업단 유형별 카드를 보여준다', async () => {
     vi.mocked(client.apiFetch).mockResolvedValue(
       summaryResponse([
@@ -46,7 +70,7 @@ describe('LobbyPage', () => {
       ])
     );
 
-    render(<LobbyPage />);
+    renderLobbyPage();
 
     expect(await screen.findByText('87.3%')).toBeInTheDocument();
     expect(client.apiFetch).toHaveBeenCalledWith('/api/admin/attendance/summary?period=today');
@@ -68,7 +92,7 @@ describe('LobbyPage', () => {
           { unitType: 'SOCIAL_SERVICE', label: '사회서비스형', attendanceRate: 60 },
         ])
       );
-    render(<LobbyPage />);
+    renderLobbyPage();
     await screen.findAllByText('50.0%');
     const user = userEvent.setup();
 
@@ -83,7 +107,7 @@ describe('LobbyPage', () => {
   it('API 실패 시 에러 메시지와 재시도 버튼을 보여준다', async () => {
     vi.mocked(client.apiFetch).mockResolvedValue(new Response(null, { status: 500 }));
 
-    render(<LobbyPage />);
+    renderLobbyPage();
 
     expect(await screen.findByText('출석률을 불러오지 못했습니다')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '재시도' })).toBeInTheDocument();
@@ -99,7 +123,7 @@ describe('LobbyPage', () => {
     });
     vi.mocked(client.apiFetch).mockResolvedValue(new Response(null, { status: 401 }));
 
-    render(<LobbyPage />);
+    renderLobbyPage();
 
     await waitFor(() => {
       expect(logout).toHaveBeenCalled();
