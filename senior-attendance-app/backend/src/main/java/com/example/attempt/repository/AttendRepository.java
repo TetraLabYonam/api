@@ -84,4 +84,11 @@ public interface AttendRepository extends JpaRepository<Attend, Long> {
     List<Object[]> getAttendanceStatsByUnitTypeAndDateRange(
             @Param("start") LocalDate start,
             @Param("end") LocalDate end);
+
+    /**
+     * attendId로 출석 정보 1건을 member까지 JOIN FETCH하여 조회 (관리자 출석 상태 수정 응답용)
+     * Attend.member는 필수(nullable=false) 관계이므로 INNER JOIN FETCH로 충분하다.
+     */
+    @Query("SELECT a FROM Attend a JOIN FETCH a.member WHERE a.id = :attendId")
+    Optional<Attend> findByIdWithMember(@Param("attendId") Long attendId);
 }
