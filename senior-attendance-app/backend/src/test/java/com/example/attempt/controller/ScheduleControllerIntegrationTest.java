@@ -1,6 +1,8 @@
 package com.example.attempt.controller;
 
 import com.example.attempt.domain.Admin;
+import com.example.attempt.domain.Attend;
+import com.example.attempt.domain.AttendStatus;
 import com.example.attempt.domain.Member;
 import com.example.attempt.domain.Place;
 import com.example.attempt.domain.Schedule;
@@ -20,6 +22,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -227,5 +230,120 @@ class ScheduleControllerIntegrationTest {
                 new HttpEntity<>(body, authHeaders(accessToken)), Object.class);
 
         assertEquals(400, resp.getStatusCodeValue());
+    }
+
+    @Test
+    void get_withoutAuth_returns401() {
+        Place place = saveTestPlace();
+        ResponseEntity<Object> resp = restTemplate.getForEntity(
+                "http://localhost:" + port + "/api/admin/schedules?placeId=" + place.getId() + "&date=2026-07-13",
+                Object.class);
+
+        assertEquals(401, resp.getStatusCodeValue());
+    }
+
+    @Test
+    void get_withMemberToken_returns403() {
+        Place place = saveTestPlace();
+        String accessToken = obtainMemberAccessToken("01099997777");
+
+        ResponseEntity<Object> resp = restTemplate.exchange(
+                "http://localhost:" + port + "/api/admin/schedules?placeId=" + place.getId() + "&date=2026-07-13",
+                HttpMethod.GET, new HttpEntity<>(authHeaders(accessToken)), Object.class);
+
+        assertEquals(403, resp.getStatusCodeValue());
+    }
+
+    @Test
+    void get_withAdminToken_noScheduleForPlaceAndDate_returns404() {
+        Place place = saveTestPlace();
+        String accessToken = obtainAdminAccessToken();
+
+        ResponseEntity<Object> resp = restTemplate.exchange(
+                "http://localhost:" + port + "/api/admin/schedules?placeId=" + place.getId() + "&date=2026-07-13",
+                HttpMethod.GET, new HttpEntity<>(authHeaders(accessToken)), Object.class);
+
+        assertEquals(404, resp.getStatusCodeValue());
+    }
+
+    @Test
+    void get_withAdminToken_scheduleWithAttendees_returns200WithAttendeeDetails() {
+        Place place = saveTestPlace();
+        Schedule schedule = scheduleRepository.save(Schedule.builder()
+                .title("오전 근무")
+                .scheduleDate(LocalDate.of(2026, 7, 13))
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(13, 0))
+                .place(place)
+                .build());
+
+        Member member1 = memberRepository.save(new Member("김할매", "01070004444"));
+        Member member2 = memberRepository.save(new Member("이할배", "01070005555"));
+
+        Attend attend1 = attendRepository.save(Attend.builder()
+                .member(member1)
+                .schedule(schedule)
+                .status(AttendStatus.PRESENT)
+                .attendedAt(LocalDateTime.of(2026, 7, 13, 9, 2))
+                .build());
+        Attend attend2 = attendRepository.save(Attend.builder()
+                .member(member2)
+                .schedule(schedule)
+                .status(AttendStatus.ABSENT)
+                .note("병가")
+                .build());
+
+        // 다른 장소·날짜의 일정: 응답에 섞여 나오면 안 됨
+        Place otherPlace = placeRepository.save(new Place("다른 공원", "다른 주소", 36.0, 128.0));
+        Schedule otherSchedule = scheduleRepository.save(Schedule.builder()
+                .title("다른 일정")
+                .scheduleDate(LocalDate.of(2026, 7, 14))
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(13, 0))
+                .place(otherPlace)
+                .build());
+        Member otherMember = memberRepository.save(new Member("박할매", "01070006666"));
+        attendRepository.save(Attend.builder()
+                .member(otherMember)
+                .schedule(otherSchedule)
+                .status(AttendStatus.SCHEDULED)
+                .build());
+
+        String accessToken = obtainAdminAccessToken();
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "http://localhost:" + port + "/api/admin/schedules?placeId=" + place.getId() + "&date=2026-07-13",
+                HttpMethod.GET, new HttpEntity<>(authHeaders(accessToken)), Map.class);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        Map body = resp.getBody();
+        assertEquals(schedule.getId().intValue(), ((Number) body.get("scheduleId")).intValue());
+        assertEquals("오전 근무", body.get("title"));
+        assertEquals("2026-07-13", body.get("scheduleDate"));
+        assertEquals("09:00:00", body.get("startTime"));
+        assertEquals("13:00:00", body.get("endTime"));
+        assertEquals("중앙공원", body.get("placeName"));
+
+        List<Map> attendees = (List<Map>) body.get("attendees");
+        assertEquals(2, attendees.size());
+
+        Map attendeeForMember1 = attendees.stream()
+                .filter(a -> ((Number) a.get("memberId")).longValue() == member1.getId())
+                .findFirst().orElseThrow();
+        assertEquals(attend1.getId().intValue(), ((Number) attendeeForMember1.get("attendId")).intValue());
+        assertEquals("김할매", attendeeForMember1.get("memberName"));
+        assertEquals("PRESENT", attendeeForMember1.get("status"));
+        assertNotNull(attendeeForMember1.get("attendedAt"));
+
+        Map attendeeForMember2 = attendees.stream()
+                .filter(a -> ((Number) a.get("memberId")).longValue() == member2.getId())
+                .findFirst().orElseThrow();
+        assertEquals(attend2.getId().intValue(), ((Number) attendeeForMember2.get("attendId")).intValue());
+        assertEquals("이할배", attendeeForMember2.get("memberName"));
+        assertEquals("ABSENT", attendeeForMember2.get("status"));
+        assertEquals("병가", attendeeForMember2.get("note"));
+
+        assertTrue(attendees.stream().noneMatch(a ->
+                ((Number) a.get("memberId")).longValue() == otherMember.getId()));
     }
 }
