@@ -10,6 +10,7 @@ import com.example.attempt.repository.MemberRepository;
 import com.example.attempt.repository.PlaceRepository;
 import com.example.attempt.repository.ScheduleRepository;
 import com.example.attempt.service.SmsService;
+import com.example.attempt.support.MemberAuthTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -49,6 +51,9 @@ class AdminAttendControllerIntegrationTest {
     @Autowired
     MemberRepository memberRepository;
 
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
     @AfterEach
     void cleanUpFixtures() {
         attendRepository.deleteAll();
@@ -64,24 +69,6 @@ class AdminAttendControllerIntegrationTest {
         ResponseEntity<Map> resp = restTemplate.postForEntity(
                 "http://localhost:" + port + "/api/auth/login", req, Map.class);
         return (String) resp.getBody().get("accessToken");
-    }
-
-    private String obtainMemberAccessToken(String phoneNumber) {
-        String memberAuthBase = "http://localhost:" + port + "/api/v1/member-auth";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.postForEntity(memberAuthBase + "/otp/request",
-                new HttpEntity<>(Map.of("phoneNumber", phoneNumber), headers), Void.class);
-
-        org.mockito.ArgumentCaptor<String> messageCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
-        org.mockito.Mockito.verify(smsService).sendCustomMessage(org.mockito.ArgumentMatchers.eq(phoneNumber), messageCaptor.capture());
-        String code = messageCaptor.getValue().replaceAll(".*인증번호는 (\\d+) .*", "$1");
-
-        HttpEntity<Map<String, String>> verifyReq = new HttpEntity<>(
-                Map.of("phoneNumber", phoneNumber, "code", code), headers);
-        ResponseEntity<Map> verifyResp = restTemplate.postForEntity(
-                memberAuthBase + "/otp/verify", verifyReq, Map.class);
-        return (String) verifyResp.getBody().get("accessToken");
     }
 
     private HttpHeaders authHeaders(String accessToken) {
@@ -129,7 +116,8 @@ class AdminAttendControllerIntegrationTest {
     @Test
     void patch_withMemberToken_returns403() {
         Attend attend = saveTestAttend();
-        String accessToken = obtainMemberAccessToken("01099998888");
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", "01099998888");
         Map<String, Object> body = Map.of("status", "ABSENT", "note", "병가");
 
         ResponseEntity<Object> resp = restTemplate.exchange(

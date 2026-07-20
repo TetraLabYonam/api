@@ -12,6 +12,7 @@ import com.example.attempt.repository.MemberRepository;
 import com.example.attempt.repository.PlaceRepository;
 import com.example.attempt.repository.ScheduleRepository;
 import com.example.attempt.service.SmsService;
+import com.example.attempt.support.MemberAuthTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -56,6 +58,9 @@ class ScheduleControllerIntegrationTest {
     @Autowired
     AdminRepository adminRepository;
 
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
     @AfterEach
     void cleanUpFixtures() {
         attendRepository.deleteAll();
@@ -71,24 +76,6 @@ class ScheduleControllerIntegrationTest {
         ResponseEntity<Map> resp = restTemplate.postForEntity(
                 "http://localhost:" + port + "/api/auth/login", req, Map.class);
         return (String) resp.getBody().get("accessToken");
-    }
-
-    private String obtainMemberAccessToken(String phoneNumber) {
-        String memberAuthBase = "http://localhost:" + port + "/api/v1/member-auth";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        restTemplate.postForEntity(memberAuthBase + "/otp/request",
-                new HttpEntity<>(Map.of("phoneNumber", phoneNumber), headers), Void.class);
-
-        org.mockito.ArgumentCaptor<String> messageCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
-        org.mockito.Mockito.verify(smsService).sendCustomMessage(org.mockito.ArgumentMatchers.eq(phoneNumber), messageCaptor.capture());
-        String code = messageCaptor.getValue().replaceAll(".*인증번호는 (\\d+) .*", "$1");
-
-        HttpEntity<Map<String, String>> verifyReq = new HttpEntity<>(
-                Map.of("phoneNumber", phoneNumber, "code", code), headers);
-        ResponseEntity<Map> verifyResp = restTemplate.postForEntity(
-                memberAuthBase + "/otp/verify", verifyReq, Map.class);
-        return (String) verifyResp.getBody().get("accessToken");
     }
 
     private HttpHeaders authHeaders(String accessToken) {
@@ -121,7 +108,8 @@ class ScheduleControllerIntegrationTest {
     @Test
     void create_withMemberToken_returns403() {
         Place place = saveTestPlace();
-        String accessToken = obtainMemberAccessToken("01099998888");
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", "01099998888");
         Map<String, Object> body = Map.of(
                 "placeId", place.getId(), "title", "오전 근무",
                 "startDate", "2026-07-13", "startTime", "09:00", "endTime", "13:00");
@@ -245,7 +233,8 @@ class ScheduleControllerIntegrationTest {
     @Test
     void get_withMemberToken_returns403() {
         Place place = saveTestPlace();
-        String accessToken = obtainMemberAccessToken("01099997777");
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", "01099997777");
 
         ResponseEntity<Object> resp = restTemplate.exchange(
                 "http://localhost:" + port + "/api/admin/schedules?placeId=" + place.getId() + "&date=2026-07-13",

@@ -2,23 +2,23 @@ package com.example.attempt.controller;
 
 import com.example.attempt.domain.Place;
 import com.example.attempt.domain.UnitType;
+import com.example.attempt.repository.MemberRepository;
 import com.example.attempt.repository.PlaceRepository;
 import com.example.attempt.service.SmsService;
+import com.example.attempt.support.MemberAuthTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AdminPlaceControllerIntegrationTest {
@@ -31,6 +31,12 @@ class AdminPlaceControllerIntegrationTest {
 
     @Autowired
     PlaceRepository placeRepository;
+
+    @Autowired
+    MemberRepository memberRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @MockBean
     SmsService smsService;
@@ -50,29 +56,6 @@ class AdminPlaceControllerIntegrationTest {
         return (String) resp.getBody().get("accessToken");
     }
 
-    /**
-     * MemberAuthControllerIntegrationTest와 동일한 방식으로 실제 ROLE_MEMBER accessToken을 얻는다.
-     */
-    private String obtainMemberAccessToken(String phoneNumber) {
-        String memberAuthBase = "http://localhost:" + port + "/api/v1/member-auth";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        restTemplate.postForEntity(memberAuthBase + "/otp/request",
-                new HttpEntity<>(Map.of("phoneNumber", phoneNumber), headers), Void.class);
-
-        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
-        verify(smsService).sendCustomMessage(eq(phoneNumber), messageCaptor.capture());
-        String capturedMessage = messageCaptor.getValue();
-        String code = capturedMessage.replaceAll(".*인증번호는 (\\d+) .*", "$1");
-
-        HttpEntity<Map<String, String>> verifyReq = new HttpEntity<>(
-                Map.of("phoneNumber", phoneNumber, "code", code), headers);
-        ResponseEntity<Map> verifyResp = restTemplate.postForEntity(
-                memberAuthBase + "/otp/verify", verifyReq, Map.class);
-        return (String) verifyResp.getBody().get("accessToken");
-    }
-
     @Test
     void listPlaces_withoutAuth_returns401() {
         String url = "http://localhost:" + port + "/api/admin/places";
@@ -82,7 +65,8 @@ class AdminPlaceControllerIntegrationTest {
 
     @Test
     void listPlaces_withMemberToken_returns403() {
-        String accessToken = obtainMemberAccessToken("01099997777");
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", "01099997777");
         assertNotNull(accessToken, "Member accessToken should not be null");
 
         HttpHeaders headers = new HttpHeaders();

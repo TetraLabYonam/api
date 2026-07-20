@@ -9,16 +9,18 @@ import com.example.attempt.repository.AttendRepository;
 import com.example.attempt.repository.MemberRepository;
 import com.example.attempt.repository.PlaceRepository;
 import com.example.attempt.repository.ScheduleRepository;
+import com.example.attempt.security.JwtTokenProvider;
 import com.example.attempt.service.SmsService;
+import com.example.attempt.support.MemberAuthTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -26,8 +28,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AttendControllerIntegrationTest {
@@ -52,6 +52,12 @@ class AttendControllerIntegrationTest {
 
     @Autowired
     MemberRepository memberRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    @Autowired
+    JwtTokenProvider jwtTokenProvider;
 
     /**
      * today_withScheduledAttendToday_returnsScheduleInfo()가 만든 Attend/Schedule/Place fixture는
@@ -79,32 +85,19 @@ class AttendControllerIntegrationTest {
     }
 
     /**
-     * MemberSelfControllerIntegrationTest와 동일한 방식: 실제 OTP 요청/검증을 태워
-     * ROLE_MEMBER accessToken을 얻는다. 새로 가입한 회원은 동의를 한 적이 없으므로
-     * locationConsentAgreedAt이 null인 상태를 이 흐름만으로 재현할 수 있다.
+     * loginAsMember가 발급한 accessToken의 JWT subject(employeeId)를 복호화해 방금 로그인한
+     * Member 엔티티를 되찾는다. phoneNumber 필드/findByPhoneNumber가 사라진 뒤에도 테스트가
+     * 로그인 흐름으로 만든 회원에 직접 Attend를 붙일 수 있게 하기 위함이다.
      */
-    private String obtainMemberAccessToken(String phoneNumber) {
-        String memberAuthBase = "http://localhost:" + port + "/api/v1/member-auth";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        restTemplate.postForEntity(memberAuthBase + "/otp/request",
-                new HttpEntity<>(Map.of("phoneNumber", phoneNumber), headers), Void.class);
-
-        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
-        verify(smsService).sendCustomMessage(eq(phoneNumber), messageCaptor.capture());
-        String code = messageCaptor.getValue().replaceAll(".*인증번호는 (\\d+) .*", "$1");
-
-        HttpEntity<Map<String, String>> verifyReq = new HttpEntity<>(
-                Map.of("phoneNumber", phoneNumber, "code", code), headers);
-        ResponseEntity<Map> verifyResp = restTemplate.postForEntity(
-                memberAuthBase + "/otp/verify", verifyReq, Map.class);
-        return (String) verifyResp.getBody().get("accessToken");
+    private Member currentMemberFromToken(String accessToken) {
+        Long employeeId = Long.parseLong(jwtTokenProvider.getClaims(accessToken).getSubject());
+        return memberRepository.findByEmployeeId(employeeId).orElseThrow();
     }
 
     @Test
     void checkIn_withAuthButWithoutConsent_returns409() {
-        String accessToken = obtainMemberAccessToken("01099998888");
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", "01099998888");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -135,7 +128,8 @@ class AttendControllerIntegrationTest {
 
     @Test
     void today_withoutScheduleToday_returnsHasScheduleFalse() {
-        String accessToken = obtainMemberAccessToken("01066667777");
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", "01066667777");
 
         ResponseEntity<Map> resp = restTemplate.exchange(
                 "http://localhost:" + port + "/api/v1/attend/today",
@@ -148,8 +142,9 @@ class AttendControllerIntegrationTest {
     @Test
     void today_withScheduledAttendToday_returnsScheduleInfo() {
         String phoneNumber = "01055556666";
-        String accessToken = obtainMemberAccessToken(phoneNumber);
-        Member member = memberRepository.findByPhoneNumber(phoneNumber).orElseThrow();
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", phoneNumber);
+        Member member = currentMemberFromToken(accessToken);
 
         Place place = placeRepository.save(new Place("중앙공원", "주소", 35.3, 129.0));
         Schedule schedule = scheduleRepository.save(Schedule.builder()
@@ -190,7 +185,8 @@ class AttendControllerIntegrationTest {
 
     @Test
     void decline_noAttendRecord_returns404() {
-        String accessToken = obtainMemberAccessToken("01033332222");
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", "01033332222");
 
         HttpEntity<Map<String, Object>> req = new HttpEntity<>(
                 Map.of("scheduleId", 999999), authHeaders(accessToken));
@@ -204,8 +200,9 @@ class AttendControllerIntegrationTest {
     @Test
     void decline_scheduled_returns200AndMarksAbsentInDb() {
         String phoneNumber = "01044445555";
-        String accessToken = obtainMemberAccessToken(phoneNumber);
-        Member member = memberRepository.findByPhoneNumber(phoneNumber).orElseThrow();
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", phoneNumber);
+        Member member = currentMemberFromToken(accessToken);
 
         Place place = placeRepository.save(new Place("중앙공원", "주소", 35.3, 129.0));
         Schedule schedule = scheduleRepository.save(Schedule.builder()
@@ -238,8 +235,9 @@ class AttendControllerIntegrationTest {
     @Test
     void decline_alreadyAttended_returns200WithSuccessFalse() {
         String phoneNumber = "01088889999";
-        String accessToken = obtainMemberAccessToken(phoneNumber);
-        Member member = memberRepository.findByPhoneNumber(phoneNumber).orElseThrow();
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", phoneNumber);
+        Member member = currentMemberFromToken(accessToken);
 
         Place place = placeRepository.save(new Place("중앙공원", "주소", 35.3, 129.0));
         Schedule schedule = scheduleRepository.save(Schedule.builder()
@@ -276,12 +274,14 @@ class AttendControllerIntegrationTest {
     @Test
     void history_returnsOwnRatesAndRecordsOnly_otherMemberRecordDoesNotLeak() {
         String phoneNumber = "01022223333";
-        String accessToken = obtainMemberAccessToken(phoneNumber);
-        Member member = memberRepository.findByPhoneNumber(phoneNumber).orElseThrow();
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", phoneNumber);
+        Member member = currentMemberFromToken(accessToken);
 
         String otherPhoneNumber = "01077778888";
-        obtainMemberAccessToken(otherPhoneNumber);
-        Member otherMember = memberRepository.findByPhoneNumber(otherPhoneNumber).orElseThrow();
+        String otherAccessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", otherPhoneNumber);
+        Member otherMember = currentMemberFromToken(otherAccessToken);
 
         Place place = placeRepository.save(new Place("중앙공원", "주소", 35.3, 129.0));
         LocalDate today = LocalDate.now();
