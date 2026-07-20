@@ -65,4 +65,21 @@ class CheckinRepository {
       return CheckinResult(success: false, message: message);
     }
   }
+
+  Future<CheckinResult> decline({required int scheduleId}) async {
+    try {
+      final response = await dio.post('/api/v1/attend/decline', data: {
+        'scheduleId': scheduleId,
+      });
+      return CheckinResult(
+        success: response.data['success'] as bool? ?? true,
+        message: response.data['message'] as String? ?? '결석 처리되었습니다.',
+      );
+    } on DioException catch (e) {
+      final message = e.response?.data is Map
+          ? (e.response?.data['message'] as String? ?? '결석 처리에 실패했습니다.')
+          : '결석 처리에 실패했습니다.';
+      return CheckinResult(success: false, message: message);
+    }
+  }
 }

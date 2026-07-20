@@ -6,6 +6,7 @@ import com.example.attempt.domain.Place;
 import com.example.attempt.domain.Schedule;
 import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
+import com.example.attempt.dto.attend.AttendDeclineResponse;
 import com.example.attempt.dto.attend.AttendTodayResponse;
 import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.AttendRepository;
@@ -150,6 +151,79 @@ class AttendServiceTest {
         doThrow(new RuntimeException("SMS 전송 실패")).when(smsService).sendAttendanceNotification(any());
 
         AttendCheckInResponse response = service.checkIn(requestAt(35.3001, 129.0001));
+
+        assertTrue(response.isSuccess());
+    }
+
+    @Test
+    void decline_scheduled_marksAbsentAndReturnsSuccess() {
+        Attend attend = Attend.builder().id(10L).status(AttendStatus.SCHEDULED).build();
+        when(attendRepository.findByScheduleIdAndMemberId(1L, 100L)).thenReturn(Optional.of(attend));
+
+        AttendDeclineResponse response = service.decline(1L, 100L);
+
+        assertTrue(response.isSuccess());
+        assertEquals("결석 처리되었습니다.", response.getMessage());
+        assertEquals(AttendStatus.ABSENT, response.getStatus());
+        assertEquals(AttendStatus.ABSENT, attend.getStatus());
+        verify(attendRepository).save(attend);
+        verify(smsService).sendAbsenceNotification(eq(attend), any());
+    }
+
+    @Test
+    void decline_alreadyAttended_returnsUnsuccessfulWithoutChangingState() {
+        Attend attend = Attend.builder().id(10L).status(AttendStatus.PRESENT).build();
+        when(attendRepository.findByScheduleIdAndMemberId(1L, 100L)).thenReturn(Optional.of(attend));
+
+        AttendDeclineResponse response = service.decline(1L, 100L);
+
+        assertFalse(response.isSuccess());
+        assertEquals("이미 출석 처리되었습니다.", response.getMessage());
+        assertEquals(AttendStatus.PRESENT, response.getStatus());
+        verify(attendRepository, never()).save(any());
+        verify(smsService, never()).sendAbsenceNotification(any(), any());
+    }
+
+    @Test
+    void decline_alreadyAbsent_idempotentNoDuplicateSms() {
+        Attend attend = Attend.builder().id(10L).status(AttendStatus.ABSENT).build();
+        when(attendRepository.findByScheduleIdAndMemberId(1L, 100L)).thenReturn(Optional.of(attend));
+
+        AttendDeclineResponse response = service.decline(1L, 100L);
+
+        assertTrue(response.isSuccess());
+        assertEquals("이미 결석 처리되었습니다.", response.getMessage());
+        assertEquals(AttendStatus.ABSENT, response.getStatus());
+        verify(attendRepository, never()).save(any());
+        verify(smsService, never()).sendAbsenceNotification(any(), any());
+    }
+
+    @Test
+    void decline_alreadyExcused_idempotentNoStateChange() {
+        Attend attend = Attend.builder().id(10L).status(AttendStatus.EXCUSED).build();
+        when(attendRepository.findByScheduleIdAndMemberId(1L, 100L)).thenReturn(Optional.of(attend));
+
+        AttendDeclineResponse response = service.decline(1L, 100L);
+
+        assertTrue(response.isSuccess());
+        assertEquals(AttendStatus.EXCUSED, response.getStatus());
+        verify(attendRepository, never()).save(any());
+    }
+
+    @Test
+    void decline_noAttendRecord_throwsResourceNotFound() {
+        when(attendRepository.findByScheduleIdAndMemberId(1L, 100L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> service.decline(1L, 100L));
+    }
+
+    @Test
+    void decline_smsSendFails_stillReturnsSuccess() {
+        Attend attend = Attend.builder().id(10L).status(AttendStatus.SCHEDULED).build();
+        when(attendRepository.findByScheduleIdAndMemberId(1L, 100L)).thenReturn(Optional.of(attend));
+        doThrow(new RuntimeException("SMS 전송 실패")).when(smsService).sendAbsenceNotification(any(), any());
+
+        AttendDeclineResponse response = service.decline(1L, 100L);
 
         assertTrue(response.isSuccess());
     }

@@ -4,6 +4,8 @@ import com.example.attempt.domain.Member;
 import com.example.attempt.dto.attend.AttendCheckInApiRequest;
 import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
+import com.example.attempt.dto.attend.AttendDeclineApiRequest;
+import com.example.attempt.dto.attend.AttendDeclineResponse;
 import com.example.attempt.dto.attend.AttendTodayResponse;
 import com.example.attempt.service.AttendService;
 import com.example.attempt.service.CurrentMemberService;
@@ -35,6 +37,12 @@ public class AttendController {
                 .build();
 
         return attendService.checkIn(serviceRequest);
+    }
+
+    @PostMapping("/decline")
+    public AttendDeclineResponse decline(@Valid @RequestBody AttendDeclineApiRequest request) {
+        Member member = currentMemberService.getCurrentMember();
+        return attendService.decline(request.getScheduleId(), member.getId());
     }
 
     @GetMapping("/today")

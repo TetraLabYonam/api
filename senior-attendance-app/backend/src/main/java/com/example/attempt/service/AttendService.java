@@ -6,6 +6,7 @@ import com.example.attempt.domain.Place;
 import com.example.attempt.domain.Schedule;
 import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
+import com.example.attempt.dto.attend.AttendDeclineResponse;
 import com.example.attempt.dto.attend.AttendTodayResponse;
 import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.AttendRepository;
@@ -116,6 +117,56 @@ public class AttendService {
                 .isLate(isLate)
                 .locationInfo(String.format("위치 확인 완료 (거리: %.1fm)", distance))
                 .distance(distance)
+                .success(true)
+                .build();
+    }
+
+    /**
+     * 결석 처리 (회원 자기-서비스) — 위치 검증 없이 즉시 결석 처리한다.
+     */
+    public AttendDeclineResponse decline(Long scheduleId, Long memberId) {
+        log.info("결석 처리 시도: scheduleId={}, memberId={}", scheduleId, memberId);
+
+        Attend attend = attendRepository.findByScheduleIdAndMemberId(scheduleId, memberId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "해당 일정의 출석 정보를 찾을 수 없습니다. scheduleId=" + scheduleId +
+                        ", memberId=" + memberId));
+
+        if (attend.isAttended()) {
+            log.warn("이미 출석 처리된 기록에 결석 시도: attendId={}, status={}", attend.getId(), attend.getStatus());
+            return AttendDeclineResponse.builder()
+                    .attendId(attend.getId())
+                    .status(attend.getStatus())
+                    .message("이미 출석 처리되었습니다.")
+                    .success(false)
+                    .build();
+        }
+
+        if (attend.isAbsent()) {
+            log.info("이미 결석 처리된 기록: attendId={}, status={}", attend.getId(), attend.getStatus());
+            return AttendDeclineResponse.builder()
+                    .attendId(attend.getId())
+                    .status(attend.getStatus())
+                    .message("이미 결석 처리되었습니다.")
+                    .success(true)
+                    .build();
+        }
+
+        attend.markAbsent("회원 자가 결석");
+        attendRepository.save(attend);
+
+        try {
+            smsService.sendAbsenceNotification(attend, "회원 자가 결석");
+        } catch (Exception e) {
+            log.error("결석 SMS 전송 실패: attendId={}", attend.getId(), e);
+        }
+
+        log.info("결석 처리 완료: attendId={}", attend.getId());
+
+        return AttendDeclineResponse.builder()
+                .attendId(attend.getId())
+                .status(attend.getStatus())
+                .message("결석 처리되었습니다.")
                 .success(true)
                 .build();
     }

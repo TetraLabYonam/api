@@ -174,4 +174,93 @@ class AttendControllerIntegrationTest {
         assertEquals("09:00", resp.getBody().get("startTime"));
         assertEquals("13:00", resp.getBody().get("endTime"));
     }
+
+    @Test
+    void decline_withoutAuth_returns401() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> req = new HttpEntity<>(Map.of("scheduleId", 1), headers);
+
+        ResponseEntity<Object> resp = restTemplate.postForEntity(
+                "http://localhost:" + port + "/api/v1/attend/decline", req, Object.class);
+
+        assertEquals(401, resp.getStatusCodeValue());
+    }
+
+    @Test
+    void decline_noAttendRecord_returns404() {
+        String accessToken = obtainMemberAccessToken("01033332222");
+
+        HttpEntity<Map<String, Object>> req = new HttpEntity<>(
+                Map.of("scheduleId", 999999), authHeaders(accessToken));
+
+        ResponseEntity<Object> resp = restTemplate.postForEntity(
+                "http://localhost:" + port + "/api/v1/attend/decline", req, Object.class);
+
+        assertEquals(404, resp.getStatusCodeValue());
+    }
+
+    @Test
+    void decline_scheduled_returns200AndMarksAbsentInDb() {
+        String phoneNumber = "01044445555";
+        String accessToken = obtainMemberAccessToken(phoneNumber);
+        Member member = memberRepository.findByPhoneNumber(phoneNumber).orElseThrow();
+
+        Place place = placeRepository.save(new Place("중앙공원", "주소", 35.3, 129.0));
+        Schedule schedule = scheduleRepository.save(Schedule.builder()
+                .title("오전 근무")
+                .scheduleDate(LocalDate.now())
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(13, 0))
+                .place(place)
+                .build());
+        Attend attend = attendRepository.save(Attend.builder()
+                .member(member)
+                .schedule(schedule)
+                .status(AttendStatus.SCHEDULED)
+                .build());
+
+        HttpEntity<Map<String, Object>> req = new HttpEntity<>(
+                Map.of("scheduleId", schedule.getId()), authHeaders(accessToken));
+
+        ResponseEntity<Map> resp = restTemplate.postForEntity(
+                "http://localhost:" + port + "/api/v1/attend/decline", req, Map.class);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        assertEquals(true, resp.getBody().get("success"));
+        assertEquals("결석 처리되었습니다.", resp.getBody().get("message"));
+
+        Attend updated = attendRepository.findById(attend.getId()).orElseThrow();
+        assertEquals(AttendStatus.ABSENT, updated.getStatus());
+    }
+
+    @Test
+    void decline_alreadyAttended_returns200WithSuccessFalse() {
+        String phoneNumber = "01088889999";
+        String accessToken = obtainMemberAccessToken(phoneNumber);
+        Member member = memberRepository.findByPhoneNumber(phoneNumber).orElseThrow();
+
+        Place place = placeRepository.save(new Place("중앙공원", "주소", 35.3, 129.0));
+        Schedule schedule = scheduleRepository.save(Schedule.builder()
+                .title("오전 근무")
+                .scheduleDate(LocalDate.now())
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(13, 0))
+                .place(place)
+                .build());
+        attendRepository.save(Attend.builder()
+                .member(member)
+                .schedule(schedule)
+                .status(AttendStatus.PRESENT)
+                .build());
+
+        HttpEntity<Map<String, Object>> req = new HttpEntity<>(
+                Map.of("scheduleId", schedule.getId()), authHeaders(accessToken));
+
+        ResponseEntity<Map> resp = restTemplate.postForEntity(
+                "http://localhost:" + port + "/api/v1/attend/decline", req, Map.class);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        assertEquals(false, resp.getBody().get("success"));
+    }
 }
