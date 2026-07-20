@@ -28,7 +28,6 @@ public class MemberSelfController {
         return Map.of(
                 "id", member.getId(),
                 "username", member.getUsername(),
-                "phoneNumber", member.getPhoneNumber(),
                 "assignedPlaceId", member.getAssignedPlaceId() == null ? "" : member.getAssignedPlaceId(),
                 "locationConsentAgreed", member.getLocationConsentAgreedAt() != null
         );

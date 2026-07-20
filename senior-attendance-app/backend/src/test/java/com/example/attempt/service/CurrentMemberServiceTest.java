@@ -32,22 +32,23 @@ class CurrentMemberServiceTest {
     }
 
     @Test
-    void getCurrentMember_looksUpByAuthenticatedPhoneNumber() {
-        Member member = new Member("김할매", "01012345678");
-        when(memberRepository.findByPhoneNumber("01012345678")).thenReturn(Optional.of(member));
+    void getCurrentMember_looksUpByAuthenticatedEmployeeId() {
+        Member member = Member.withPhoneNumberHash("김할매", "hashed");
+        member.setEmployeeId(1001L);
+        when(memberRepository.findByEmployeeId(1001L)).thenReturn(Optional.of(member));
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("01012345678", null, List.of()));
+                new UsernamePasswordAuthenticationToken("1001", null, List.of()));
 
         Member result = service.getCurrentMember();
 
-        assertEquals("01012345678", result.getPhoneNumber());
+        assertEquals(1001L, result.getEmployeeId());
     }
 
     @Test
-    void getCurrentMember_throws_whenNoMemberForPhoneNumber() {
-        when(memberRepository.findByPhoneNumber("01099990000")).thenReturn(Optional.empty());
+    void getCurrentMember_throws_whenNoMemberForEmployeeId() {
+        when(memberRepository.findByEmployeeId(9999L)).thenReturn(Optional.empty());
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("01099990000", null, List.of()));
+                new UsernamePasswordAuthenticationToken("9999", null, List.of()));
 
         assertThrows(ResourceNotFoundException.class, () -> service.getCurrentMember());
     }
