@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../design_system/atm_bottom_action_bar.dart';
 import '../../design_system/atm_colors.dart';
+import '../attendance_history/attendance_history_screen.dart';
 import '../auth/auth_provider.dart';
 import 'checkin_repository.dart';
 
@@ -107,8 +108,11 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(_result!.success ? Icons.check_circle : Icons.info,
-                  color: _result!.success ? AtmColors.primary : Colors.grey, size: 40),
+              Icon(
+                _result!.success ? Icons.check_circle : Icons.info,
+                color: _result!.success ? AtmColors.primary : Colors.grey,
+                size: 40,
+              ),
               const SizedBox(height: 10),
               Text(
                 _result!.message,
@@ -128,7 +132,18 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     final canAct = _today != null && _today!.hasSchedule;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('출석 체크')),
+      appBar: AppBar(
+        title: const Text('출석 체크'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: '이번 달 출석 이력',
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()));
+            },
+          ),
+        ],
+      ),
       body: _loadingToday
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -136,8 +151,10 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('지금 출석 체크를\n하시겠어요?',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black)),
+                  const Text(
+                    '지금 출석 체크를\n하시겠어요?',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
                   const SizedBox(height: 20),
                   if (canAct)
                     Container(
@@ -145,7 +162,8 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300)),
                       child: Text(
-                          '오늘 일정: ${_today!.placeName ?? ''} ${_today!.startTime ?? ''}~${_today!.endTime ?? ''}'),
+                        '오늘 일정: ${_today!.placeName ?? ''} ${_today!.startTime ?? ''}~${_today!.endTime ?? ''}',
+                      ),
                     )
                   else
                     const Text('오늘은 예정된 출석이 없습니다', style: TextStyle(color: Colors.black54)),
