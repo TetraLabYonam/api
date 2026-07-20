@@ -22,6 +22,7 @@ import org.springframework.http.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -262,5 +263,65 @@ class AttendControllerIntegrationTest {
 
         assertEquals(200, resp.getStatusCodeValue());
         assertEquals(false, resp.getBody().get("success"));
+    }
+
+    @Test
+    void history_withoutAuth_returns401() {
+        ResponseEntity<Object> resp = restTemplate.getForEntity(
+                "http://localhost:" + port + "/api/v1/attend/history", Object.class);
+
+        assertEquals(401, resp.getStatusCodeValue());
+    }
+
+    @Test
+    void history_returnsOwnRatesAndRecordsOnly_otherMemberRecordDoesNotLeak() {
+        String phoneNumber = "01022223333";
+        String accessToken = obtainMemberAccessToken(phoneNumber);
+        Member member = memberRepository.findByPhoneNumber(phoneNumber).orElseThrow();
+
+        String otherPhoneNumber = "01077778888";
+        obtainMemberAccessToken(otherPhoneNumber);
+        Member otherMember = memberRepository.findByPhoneNumber(otherPhoneNumber).orElseThrow();
+
+        Place place = placeRepository.save(new Place("중앙공원", "주소", 35.3, 129.0));
+        LocalDate today = LocalDate.now();
+
+        Schedule mySchedule = scheduleRepository.save(Schedule.builder()
+                .title("오전 근무")
+                .scheduleDate(today)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(13, 0))
+                .place(place)
+                .build());
+        attendRepository.save(Attend.builder()
+                .member(member)
+                .schedule(mySchedule)
+                .status(AttendStatus.PRESENT)
+                .build());
+
+        Schedule otherSchedule = scheduleRepository.save(Schedule.builder()
+                .title("오후 근무")
+                .scheduleDate(today)
+                .startTime(LocalTime.of(14, 0))
+                .endTime(LocalTime.of(18, 0))
+                .place(place)
+                .build());
+        attendRepository.save(Attend.builder()
+                .member(otherMember)
+                .schedule(otherSchedule)
+                .status(AttendStatus.ABSENT)
+                .build());
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "http://localhost:" + port + "/api/v1/attend/history",
+                HttpMethod.GET, new HttpEntity<>(authHeaders(accessToken)), Map.class);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        assertEquals(100.0, resp.getBody().get("attendanceRate"));
+
+        List<Map<String, Object>> records = (List<Map<String, Object>>) resp.getBody().get("records");
+        assertEquals(1, records.size());
+        assertEquals("중앙공원", records.get(0).get("placeName"));
+        assertEquals("PRESENT", records.get(0).get("status"));
     }
 }

@@ -7,6 +7,7 @@ import com.example.attempt.domain.Schedule;
 import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
 import com.example.attempt.dto.attend.AttendDeclineResponse;
+import com.example.attempt.dto.attend.AttendHistoryResponse;
 import com.example.attempt.dto.attend.AttendTodayResponse;
 import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.AttendRepository;
@@ -250,5 +251,67 @@ class AttendServiceTest {
         AttendTodayResponse response = service.findTodayAttend(100L);
 
         assertFalse(response.isHasSchedule());
+    }
+
+    @Test
+    void getHistory_presentAndLateIncludedAbsentExcluded_calculatesRateCorrectly() {
+        List<Object[]> stats = List.of(
+                new Object[]{AttendStatus.PRESENT, 3L},
+                new Object[]{AttendStatus.LATE, 1L},
+                new Object[]{AttendStatus.ABSENT, 4L}
+        );
+        when(attendRepository.getAttendanceStatsByMemberId(eq(100L), any(), any()))
+                .thenReturn(stats);
+        when(attendRepository.findByMemberIdAndDateRange(eq(100L), any(), any()))
+                .thenReturn(List.of());
+
+        AttendHistoryResponse response = service.getHistory(100L);
+
+        // (PRESENT 3 + LATE 1) / 전체 8 * 100 = 50.0
+        assertEquals(50.0, response.getAttendanceRate(), 0.0001);
+    }
+
+    @Test
+    void getHistory_noRecords_returnsZeroRateAndEmptyList() {
+        when(attendRepository.getAttendanceStatsByMemberId(eq(100L), any(), any()))
+                .thenReturn(List.of());
+        when(attendRepository.findByMemberIdAndDateRange(eq(100L), any(), any()))
+                .thenReturn(List.of());
+
+        AttendHistoryResponse response = service.getHistory(100L);
+
+        assertEquals(0.0, response.getAttendanceRate(), 0.0001);
+        assertTrue(response.getRecords().isEmpty());
+    }
+
+    @Test
+    void getHistory_mapsRecordsToScheduleDatePlaceNameAndStatus() {
+        Place place = placeAt(35.30, 129.00);
+        place.setName("중앙공원");
+        Schedule schedule = Schedule.builder()
+                .id(1L)
+                .title("오전 근무")
+                .scheduleDate(LocalDate.of(2026, 7, 15))
+                .startTime(LocalTime.of(9, 0))
+                .place(place)
+                .build();
+        Attend attend = Attend.builder()
+                .id(10L)
+                .schedule(schedule)
+                .status(AttendStatus.PRESENT)
+                .build();
+
+        when(attendRepository.getAttendanceStatsByMemberId(eq(100L), any(), any()))
+                .thenReturn(List.<Object[]>of(new Object[]{AttendStatus.PRESENT, 1L}));
+        when(attendRepository.findByMemberIdAndDateRange(eq(100L), any(), any()))
+                .thenReturn(List.of(attend));
+
+        AttendHistoryResponse response = service.getHistory(100L);
+
+        assertEquals(1, response.getRecords().size());
+        var item = response.getRecords().get(0);
+        assertEquals(LocalDate.of(2026, 7, 15), item.getScheduleDate());
+        assertEquals("중앙공원", item.getPlaceName());
+        assertEquals(AttendStatus.PRESENT, item.getStatus());
     }
 }

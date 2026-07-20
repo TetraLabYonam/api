@@ -6,6 +6,7 @@ import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
 import com.example.attempt.dto.attend.AttendDeclineApiRequest;
 import com.example.attempt.dto.attend.AttendDeclineResponse;
+import com.example.attempt.dto.attend.AttendHistoryResponse;
 import com.example.attempt.dto.attend.AttendTodayResponse;
 import com.example.attempt.service.AttendService;
 import com.example.attempt.service.CurrentMemberService;
@@ -49,5 +50,11 @@ public class AttendController {
     public AttendTodayResponse today() {
         Member member = currentMemberService.getCurrentMember();
         return attendService.findTodayAttend(member.getId());
+    }
+
+    @GetMapping("/history")
+    public AttendHistoryResponse history() {
+        Member member = currentMemberService.getCurrentMember();
+        return attendService.getHistory(member.getId());
     }
 }

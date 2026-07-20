@@ -7,6 +7,8 @@ import com.example.attempt.domain.Schedule;
 import com.example.attempt.dto.attend.AttendCheckInRequest;
 import com.example.attempt.dto.attend.AttendCheckInResponse;
 import com.example.attempt.dto.attend.AttendDeclineResponse;
+import com.example.attempt.dto.attend.AttendHistoryItem;
+import com.example.attempt.dto.attend.AttendHistoryResponse;
 import com.example.attempt.dto.attend.AttendTodayResponse;
 import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.AttendRepository;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -180,6 +183,43 @@ public class AttendService {
         List<Attend> attends = attendRepository.findByMemberIdAndDateRange(memberId, today, today);
         Optional<Attend> attend = attends.stream().findFirst();
         return attend.map(AttendTodayResponse::of).orElseGet(AttendTodayResponse::none);
+    }
+
+    /**
+     * 로그인한 회원의 이번 달 출석 이력을 조회한다. 출석률은 (PRESENT+LATE 건수)/(전체 건수)*100 (전체가 0이면 0.0).
+     * 트랜잭션이 열려 있는 동안 지연 로딩되는 schedule/place까지 매핑하여 반환한다.
+     */
+    public AttendHistoryResponse getHistory(Long memberId) {
+        LocalDate startDate = LocalDate.now().withDayOfMonth(1);
+        LocalDate endDate = LocalDate.now();
+
+        List<Object[]> statsRows = attendRepository.getAttendanceStatsByMemberId(memberId, startDate, endDate);
+
+        long attendedCount = 0;
+        long totalCount = 0;
+        for (Object[] row : statsRows) {
+            AttendStatus status = (AttendStatus) row[0];
+            long count = (Long) row[1];
+
+            totalCount += count;
+            if (status == AttendStatus.PRESENT || status == AttendStatus.LATE) {
+                attendedCount += count;
+            }
+        }
+        double attendanceRate = totalCount == 0 ? 0.0 : (attendedCount * 100.0) / totalCount;
+
+        List<Attend> attends = attendRepository.findByMemberIdAndDateRange(memberId, startDate, endDate);
+        List<AttendHistoryItem> records = new ArrayList<>();
+        for (Attend attend : attends) {
+            Schedule schedule = attend.getSchedule();
+            records.add(new AttendHistoryItem(
+                    schedule.getScheduleDate(),
+                    schedule.getPlace().getName(),
+                    attend.getStatus()
+            ));
+        }
+
+        return new AttendHistoryResponse(attendanceRate, records);
     }
 
     /**
