@@ -33,7 +33,7 @@ class PlaceMemberSchemaTest {
         Place place = new Place("공원안전지킴이", "경남 양산시 어딘가", 35.33, 129.03);
         em.persist(place);
 
-        Member member = new Member("김할매", "01000000000");
+        Member member = Member.withPhoneNumberHash("김할매", "01000000000");
         member.setAssignedPlaceId(place.getId());
         LocalDateTime consentAt = LocalDateTime.now().withNano(0);
         member.setLocationConsentAgreedAt(consentAt);

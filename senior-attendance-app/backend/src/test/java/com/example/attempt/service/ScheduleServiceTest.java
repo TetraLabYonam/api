@@ -60,8 +60,8 @@ class ScheduleServiceTest {
 
     @Test
     void singleDay_ignoresDaysOfWeek_createsOneScheduleAndAttendsForAssignedMembers() {
-        Member m1 = new Member("김할매", "01070001111");
-        Member m2 = new Member("이할배", "01070001112");
+        Member m1 = Member.withPhoneNumberHash("김할매", "01070001111");
+        Member m2 = Member.withPhoneNumberHash("이할배", "01070001112");
         when(memberRepository.findByAssignedPlaceId(1L)).thenReturn(List.of(m1, m2));
         when(scheduleRepository.existsByPlaceIdAndScheduleDate(eq(1L), any())).thenReturn(false);
 
@@ -80,7 +80,7 @@ class ScheduleServiceTest {
 
     @Test
     void recurringRange_filtersByDaysOfWeek() {
-        when(memberRepository.findByAssignedPlaceId(1L)).thenReturn(List.of(new Member("김할매", "01070001111")));
+        when(memberRepository.findByAssignedPlaceId(1L)).thenReturn(List.of(Member.withPhoneNumberHash("김할매", "01070001111")));
         when(scheduleRepository.existsByPlaceIdAndScheduleDate(eq(1L), any())).thenReturn(false);
 
         // 2026-07-06(월) ~ 2026-07-19(일), [월,수] -> 07-06,07-08,07-13,07-15
@@ -103,7 +103,7 @@ class ScheduleServiceTest {
 
     @Test
     void duplicateDate_isSkipped_noAttendCreated() {
-        when(memberRepository.findByAssignedPlaceId(1L)).thenReturn(List.of(new Member("김할매", "01070001111")));
+        when(memberRepository.findByAssignedPlaceId(1L)).thenReturn(List.of(Member.withPhoneNumberHash("김할매", "01070001111")));
         when(scheduleRepository.existsByPlaceIdAndScheduleDate(1L, LocalDate.of(2026, 7, 13))).thenReturn(true);
         when(scheduleRepository.existsByPlaceIdAndScheduleDate(1L, LocalDate.of(2026, 7, 6))).thenReturn(false);
         when(scheduleRepository.existsByPlaceIdAndScheduleDate(1L, LocalDate.of(2026, 7, 8))).thenReturn(false);

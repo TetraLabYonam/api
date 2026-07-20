@@ -124,7 +124,7 @@ class ScheduleControllerIntegrationTest {
     @Test
     void create_withAdminToken_singleDay_createsScheduleAndAttendsForAssignedMembers() {
         Place place = saveTestPlace();
-        Member member = memberRepository.save(new Member("김할매", "01070002222"));
+        Member member = memberRepository.save(Member.withPhoneNumberHash("김할매", "01070002222"));
         member.setAssignedPlaceId(place.getId());
         memberRepository.save(member);
 
@@ -159,7 +159,7 @@ class ScheduleControllerIntegrationTest {
     @Test
     void create_withAdminToken_recurringWithExistingDate_separatesCreatedAndSkipped() {
         Place place = saveTestPlace();
-        Member member = memberRepository.save(new Member("김할매", "01070003333"));
+        Member member = memberRepository.save(Member.withPhoneNumberHash("김할매", "01070003333"));
         member.setAssignedPlaceId(place.getId());
         memberRepository.save(member);
 
@@ -266,8 +266,8 @@ class ScheduleControllerIntegrationTest {
                 .place(place)
                 .build());
 
-        Member member1 = memberRepository.save(new Member("김할매", "01070004444"));
-        Member member2 = memberRepository.save(new Member("이할배", "01070005555"));
+        Member member1 = memberRepository.save(Member.withPhoneNumberHash("김할매", "01070004444"));
+        Member member2 = memberRepository.save(Member.withPhoneNumberHash("이할배", "01070005555"));
 
         Attend attend1 = attendRepository.save(Attend.builder()
                 .member(member1)
@@ -291,7 +291,7 @@ class ScheduleControllerIntegrationTest {
                 .endTime(LocalTime.of(13, 0))
                 .place(otherPlace)
                 .build());
-        Member otherMember = memberRepository.save(new Member("박할매", "01070006666"));
+        Member otherMember = memberRepository.save(Member.withPhoneNumberHash("박할매", "01070006666"));
         attendRepository.save(Attend.builder()
                 .member(otherMember)
                 .schedule(otherSchedule)

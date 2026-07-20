@@ -91,7 +91,7 @@ class AdminAttendControllerIntegrationTest {
                 .endTime(LocalTime.of(13, 0))
                 .place(place)
                 .build());
-        Member member = memberRepository.save(new Member("김할매", "01070002222"));
+        Member member = memberRepository.save(Member.withPhoneNumberHash("김할매", "01070002222"));
         return attendRepository.save(Attend.builder()
                 .member(member)
                 .schedule(schedule)

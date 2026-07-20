@@ -27,7 +27,6 @@ public class Member {
     @Column(name = "MEMBER_ID")
     private Long id; // 직번으로 기본키 설정 여부
     private String username;
-    private String phoneNumber;
     private String guardianPhone;
 
     @OneToMany(mappedBy = "member")
@@ -51,17 +50,6 @@ public class Member {
 
     @Column(name = "active", nullable = false)
     private boolean active = true;
-
-    public Member(String username, String phoneNumber) {
-        this.username = username;
-        this.phoneNumber = phoneNumber;
-    }
-
-    public Member(String username, String phoneNumber, String guardianPhone) {
-        this.username = username;
-        this.phoneNumber = phoneNumber;
-        this.guardianPhone = guardianPhone;
-    }
 
     public static Member withPhoneNumberHash(String username, String phoneNumberHash) {
         Member member = new Member();

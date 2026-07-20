@@ -38,7 +38,7 @@ class AttendRepositoryUnitTypeSummaryTest {
         marketPlace.setUnitType(UnitType.MARKET);
         entityManager.persist(marketPlace);
 
-        Member member = new Member("홍길동", "01011112222");
+        Member member = Member.withPhoneNumberHash("홍길동", "01011112222");
         entityManager.persist(member);
 
         Schedule inRangeSchedule = Schedule.builder()
