@@ -45,5 +45,6 @@ spy.log
 
 ### git worktrees (superpowers:using-git-worktrees) ###
 .worktrees/
+.claude/worktrees/
 
 PORTFOLIO.md
