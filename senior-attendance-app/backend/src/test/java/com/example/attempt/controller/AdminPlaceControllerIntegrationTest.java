@@ -114,7 +114,26 @@ class AdminPlaceControllerIntegrationTest {
                 url, HttpMethod.GET, new HttpEntity<>(headers), Map[].class);
 
         assertEquals(200, resp.getStatusCodeValue());
-        assertEquals(2, resp.getBody().length);
-        assertTrue(resp.getBody()[0].containsKey("name"));
+        Map[] body = resp.getBody();
+        assertEquals(2, body.length);
+
+        Map<String, Object> parkDto = findByName(body, "공원안전지킴이");
+        Map<String, Object> marketDto = findByName(body, "동네마당재활용");
+
+        assertNotNull(parkDto, "Response should contain the seeded PUBLIC_INTEREST place by name");
+        assertNotNull(marketDto, "Response should contain the seeded MARKET place by name");
+
+        assertEquals(UnitType.PUBLIC_INTEREST.name(), parkDto.get("unitType"));
+        assertEquals(UnitType.MARKET.name(), marketDto.get("unitType"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> findByName(Map[] body, String name) {
+        for (Map<?, ?> entry : body) {
+            if (name.equals(entry.get("name"))) {
+                return (Map<String, Object>) entry;
+            }
+        }
+        return null;
     }
 }
