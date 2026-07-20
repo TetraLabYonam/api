@@ -6,6 +6,7 @@ import com.example.attempt.dto.admin.UpdateAttendStatusRequest;
 import com.example.attempt.exception.ResourceNotFoundException;
 import com.example.attempt.repository.AttendRepository;
 import com.example.attempt.service.AttendService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,7 +23,7 @@ public class AdminAttendController {
     private final AttendRepository attendRepository;
 
     @PatchMapping("/{attendId}")
-    public AttendeeItem update(@PathVariable Long attendId, @RequestBody UpdateAttendStatusRequest request) {
+    public AttendeeItem update(@PathVariable Long attendId, @Valid @RequestBody UpdateAttendStatusRequest request) {
         attendService.updateAttendStatus(attendId, request.getStatus(), request.getNote());
 
         Attend attend = attendRepository.findByIdWithMember(attendId)
