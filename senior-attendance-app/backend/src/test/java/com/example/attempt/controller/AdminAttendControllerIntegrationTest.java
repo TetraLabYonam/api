@@ -172,4 +172,40 @@ class AdminAttendControllerIntegrationTest {
         assertEquals(AttendStatus.EXCUSED, updated.getStatus());
         assertEquals("병원 진료", updated.getNote());
     }
+
+    @Test
+    void patch_withBlankNote_clearsStaleNoteInDb() {
+        Attend attend = saveTestAttend();
+        attend.setStatus(AttendStatus.ABSENT);
+        attend.setNote("병가");
+        attendRepository.save(attend);
+
+        String accessToken = obtainAdminAccessToken();
+        Map<String, Object> body = Map.of("status", "PRESENT", "note", "");
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "http://localhost:" + port + "/api/admin/attend/" + attend.getId(),
+                HttpMethod.PATCH, new HttpEntity<>(body, authHeaders(accessToken)), Map.class);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        assertEquals("", resp.getBody().get("note"));
+
+        Attend updated = attendRepository.findById(attend.getId()).orElseThrow();
+        assertEquals(AttendStatus.PRESENT, updated.getStatus());
+        assertEquals("", updated.getNote());
+    }
+
+    @Test
+    void patch_withMissingStatus_returns400() {
+        Attend attend = saveTestAttend();
+        String accessToken = obtainAdminAccessToken();
+        Map<String, Object> body = new java.util.HashMap<>();
+        body.put("note", "병가");
+
+        ResponseEntity<Object> resp = restTemplate.exchange(
+                "http://localhost:" + port + "/api/admin/attend/" + attend.getId(),
+                HttpMethod.PATCH, new HttpEntity<>(body, authHeaders(accessToken)), Object.class);
+
+        assertEquals(400, resp.getStatusCodeValue());
+    }
 }

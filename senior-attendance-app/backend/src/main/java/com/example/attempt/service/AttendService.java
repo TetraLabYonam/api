@@ -274,7 +274,7 @@ public class AttendService {
                 .orElseThrow(() -> new ResourceNotFoundException("출석 정보를 찾을 수 없습니다. ID: " + attendId));
 
         attend.setStatus(status);
-        if (note != null && !note.isBlank()) {
+        if (note != null) {
             attend.setNote(note);
         }
 
