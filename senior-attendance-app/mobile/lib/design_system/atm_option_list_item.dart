@@ -14,19 +14,29 @@ class AtmOptionListItem extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 72),
+        constraints: const BoxConstraints(minHeight: 80),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        color: AtmColors.primary,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
+        decoration: const BoxDecoration(
+          color: AtmColors.onPrimary,
+          border: Border(bottom: BorderSide(color: AtmColors.border, width: 1)),
+        ),
+        child: Row(
           children: [
-            Text(title, style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold)),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(subtitle!, style: const TextStyle(color: Colors.white70, fontSize: 14)),
-            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(title, style: const TextStyle(color: AtmColors.primary, fontSize: 20, fontWeight: FontWeight.bold)),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Text(subtitle!, style: const TextStyle(color: AtmColors.onSurfaceVariant, fontSize: 16)),
+                  ],
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AtmColors.primary, size: 28),
           ],
         ),
       ),

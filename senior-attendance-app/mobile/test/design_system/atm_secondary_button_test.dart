@@ -15,12 +15,13 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  testWidgets('오렌지 배경으로 렌더링된다', (tester) async {
+  testWidgets('흰 배경에 검정 테두리로 렌더링된다', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: AtmSecondaryButton(label: '취소', onPressed: () {})),
     ));
 
-    final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
-    expect(button.style?.backgroundColor?.resolve({}), AtmColors.secondary);
+    final button = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
+    expect(button.style?.backgroundColor?.resolve({}), AtmColors.onPrimary);
+    expect(button.style?.side?.resolve({})?.color, AtmColors.border);
   });
 }

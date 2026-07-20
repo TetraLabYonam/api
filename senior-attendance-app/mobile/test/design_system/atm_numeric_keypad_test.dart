@@ -11,11 +11,11 @@ void main() {
       ),
     ));
 
-    await tester.tap(find.widgetWithText(ElevatedButton, '5'));
+    await tester.tap(find.widgetWithText(OutlinedButton, '5'));
     expect(tapped, '5');
   });
 
-  testWidgets('지우기를 탭하면 onBackspace가 호출된다', (tester) async {
+  testWidgets('지우기 아이콘을 탭하면 onBackspace가 호출된다', (tester) async {
     bool backspaced = false;
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -23,7 +23,7 @@ void main() {
       ),
     ));
 
-    await tester.tap(find.widgetWithText(ElevatedButton, '지우기'));
+    await tester.tap(find.byIcon(Icons.backspace_outlined));
     expect(backspaced, isTrue);
   });
 

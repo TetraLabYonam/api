@@ -105,26 +105,32 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
       return Scaffold(
         appBar: AppBar(title: const Text('출석 체크')),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _result!.success ? Icons.check_circle : Icons.info,
-                color: _result!.success ? AtmColors.primary : Colors.grey,
-                size: 40,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                _result!.message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _result!.success ? Icons.check_circle_outline : Icons.info_outline,
+                  color: AtmColors.primary,
+                  size: 56,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _result!.message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AtmColors.primary),
+                ),
+              ],
+            ),
           ),
         ),
-        bottomNavigationBar: AtmBottomActionBar.single(
-          label: '확인',
-          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+          child: AtmBottomActionBar.single(
+            label: '확인',
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
         ),
       );
     }
@@ -146,39 +152,83 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
       ),
       body: _loadingToday
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+          : SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     '지금 출석 체크를\n하시겠어요?',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AtmColors.primary, height: 1.3),
                   ),
                   const SizedBox(height: 20),
                   if (canAct)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300)),
-                      child: Text(
-                        '오늘 일정: ${_today!.placeName ?? ''} ${_today!.startTime ?? ''}~${_today!.endTime ?? ''}',
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AtmColors.border, width: 2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _InfoRow(icon: Icons.place_outlined, label: '근무 장소', value: _today!.placeName ?? '-'),
+                          const SizedBox(height: 16),
+                          _InfoRow(
+                            icon: Icons.access_time,
+                            label: '근무 시간',
+                            value: '${_today!.startTime ?? ''} — ${_today!.endTime ?? ''}',
+                          ),
+                        ],
                       ),
                     )
                   else
-                    const Text('오늘은 예정된 출석이 없습니다', style: TextStyle(color: Colors.black54)),
+                    const Text('오늘은 예정된 출석이 없습니다', style: TextStyle(color: AtmColors.onSurfaceVariant, fontSize: 16)),
                   if (_errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 16),
-                      child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                      child: Text(_errorMessage!, style: const TextStyle(color: AtmColors.error, fontWeight: FontWeight.bold)),
                     ),
                 ],
               ),
             ),
-      bottomNavigationBar: AtmBottomActionBar.confirm(
-        onYes: (canAct && !_checkingIn && !_declining) ? _confirmCheckIn : null,
-        onNo: (canAct && !_checkingIn && !_declining) ? _declineCheckIn : null,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+        child: AtmBottomActionBar.confirm(
+          onYes: (canAct && !_checkingIn && !_declining) ? _confirmCheckIn : null,
+          onNo: (canAct && !_checkingIn && !_declining) ? _declineCheckIn : null,
+        ),
       ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InfoRow({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 22, color: AtmColors.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 14, color: AtmColors.onSurfaceVariant)),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AtmColors.primary)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

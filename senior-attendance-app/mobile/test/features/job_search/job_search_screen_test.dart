@@ -95,7 +95,7 @@ void main() {
     await tester.tap(find.text('공원안전지킴이'));
     await tester.pumpAndSettle();
 
-    expect(find.text('위치정보 수집 동의'), findsOneWidget);
+    expect(find.text('ATTENDANCE'), findsOneWidget);
   });
 
   testWidgets('질문 문구와 이전 버튼이 보인다', (tester) async {
@@ -106,6 +106,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('어떤 일을 하시나요?'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, '이전'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, '이전'), findsOneWidget);
   });
 }

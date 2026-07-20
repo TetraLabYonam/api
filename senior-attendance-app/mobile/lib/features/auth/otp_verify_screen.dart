@@ -41,55 +41,58 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('인증번호 입력')),
-      body: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 24, 20, 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('문자로 받은 번호\n6자리를 입력해주세요',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black)),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: List.generate(6, (i) {
-                final filled = i < _code.length;
-                return Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: filled ? AtmColors.primary : Colors.grey, width: 2),
+      appBar: AppBar(title: const Text('ATTENDANCE')),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('인증번호 6자리를\n입력해주세요',
+                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AtmColors.primary, height: 1.3)),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: List.generate(6, (i) {
+                        final filled = i < _code.length;
+                        return Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AtmColors.border, width: 2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(filled ? _code[i] : '',
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AtmColors.primary)),
+                          ),
+                        );
+                      }),
                     ),
-                    alignment: Alignment.center,
-                    child: Text(filled ? _code[i] : '',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  ),
-                );
-              }),
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(_error!, style: const TextStyle(color: AtmColors.error, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                    const SizedBox(height: 20),
+                    AtmNumericKeypad(
+                      onDigit: _onDigit,
+                      onBackspace: _onBackspace,
+                      onConfirm: _code.length == 6 ? _verify : null,
+                      confirmLabel: '확인',
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          if (_error != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Text(_error!, style: const TextStyle(color: Colors.red)),
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+              child: AtmBottomActionBar.single(label: '이전', onPressed: () => Navigator.of(context).maybePop()),
             ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: AtmNumericKeypad(
-              onDigit: _onDigit,
-              onBackspace: _onBackspace,
-              onConfirm: _code.length == 6 ? _verify : null,
-              confirmLabel: '확인',
-            ),
-          ),
-          const Spacer(),
-          AtmBottomActionBar.single(label: '이전', onPressed: () => Navigator.of(context).maybePop()),
-        ],
+          ],
+        ),
       ),
     );
   }

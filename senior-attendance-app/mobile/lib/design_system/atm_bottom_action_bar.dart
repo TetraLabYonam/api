@@ -22,10 +22,10 @@ class AtmBottomActionBar extends StatelessWidget {
         onNoTap = onNo,
         _isConfirm = true;
 
-  ButtonStyle _style(Color background) {
+  ButtonStyle _fillStyle(Color background) {
     return ElevatedButton.styleFrom(
       backgroundColor: background,
-      foregroundColor: Colors.white,
+      foregroundColor: AtmColors.onPrimary,
       minimumSize: const Size.fromHeight(64),
       shape: const RoundedRectangleBorder(),
     );
@@ -36,9 +36,15 @@ class AtmBottomActionBar extends StatelessWidget {
     if (!_isConfirm) {
       return SizedBox(
         width: double.infinity,
-        child: ElevatedButton(
+        child: OutlinedButton(
           onPressed: onSingleTap,
-          style: _style(AtmColors.secondary),
+          style: OutlinedButton.styleFrom(
+            backgroundColor: AtmColors.onPrimary,
+            foregroundColor: AtmColors.primary,
+            side: const BorderSide(color: AtmColors.border, width: 2),
+            minimumSize: const Size.fromHeight(64),
+            shape: const RoundedRectangleBorder(),
+          ),
           child: Text(singleLabel!, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
       );
@@ -48,14 +54,14 @@ class AtmBottomActionBar extends StatelessWidget {
         Expanded(
           child: ElevatedButton(
             onPressed: onYesTap,
-            style: _style(AtmColors.primary),
+            style: _fillStyle(AtmColors.success),
             child: const Text('네', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ),
         Expanded(
           child: ElevatedButton(
             onPressed: onNoTap,
-            style: _style(AtmColors.secondary),
+            style: _fillStyle(AtmColors.error),
             child: const Text('아니오', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ),

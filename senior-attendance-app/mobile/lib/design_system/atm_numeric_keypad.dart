@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'atm_colors.dart';
+import 'atm_primary_button.dart';
 
 class AtmNumericKeypad extends StatelessWidget {
   final ValueChanged<String> onDigit;
@@ -15,16 +16,31 @@ class AtmNumericKeypad extends StatelessWidget {
     this.confirmLabel = '확인',
   });
 
-  Widget _key(String label, {VoidCallback? onTap, Color? background, Color? foreground}) {
-    return ElevatedButton(
+  Widget _digitKey(String label, VoidCallback onTap) {
+    return OutlinedButton(
       onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: background,
-        foregroundColor: foreground ?? Colors.black87,
-        minimumSize: const Size.fromHeight(56),
-        shape: const RoundedRectangleBorder(),
+      style: OutlinedButton.styleFrom(
+        backgroundColor: AtmColors.onPrimary,
+        foregroundColor: AtmColors.primary,
+        side: const BorderSide(color: AtmColors.border, width: 2),
+        minimumSize: const Size.fromHeight(64),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      child: Text(label, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _backspaceKey() {
+    return OutlinedButton(
+      onPressed: onBackspace,
+      style: OutlinedButton.styleFrom(
+        backgroundColor: AtmColors.surface,
+        foregroundColor: AtmColors.primary,
+        side: const BorderSide(color: AtmColors.border, width: 2),
+        minimumSize: const Size.fromHeight(64),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      child: const Icon(Icons.backspace_outlined, size: 24),
     );
   }
 
@@ -32,7 +48,7 @@ class AtmNumericKeypad extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget row(List<Widget> children) => Row(
           children: children
-              .map((w) => Expanded(child: Padding(padding: const EdgeInsets.all(3), child: w)))
+              .map((w) => Expanded(child: Padding(padding: const EdgeInsets.all(6), child: w)))
               .toList(),
         );
 
@@ -40,25 +56,27 @@ class AtmNumericKeypad extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         row([
-          _key('1', onTap: () => onDigit('1')),
-          _key('2', onTap: () => onDigit('2')),
-          _key('3', onTap: () => onDigit('3')),
+          _digitKey('1', () => onDigit('1')),
+          _digitKey('2', () => onDigit('2')),
+          _digitKey('3', () => onDigit('3')),
         ]),
         row([
-          _key('4', onTap: () => onDigit('4')),
-          _key('5', onTap: () => onDigit('5')),
-          _key('6', onTap: () => onDigit('6')),
+          _digitKey('4', () => onDigit('4')),
+          _digitKey('5', () => onDigit('5')),
+          _digitKey('6', () => onDigit('6')),
         ]),
         row([
-          _key('7', onTap: () => onDigit('7')),
-          _key('8', onTap: () => onDigit('8')),
-          _key('9', onTap: () => onDigit('9')),
+          _digitKey('7', () => onDigit('7')),
+          _digitKey('8', () => onDigit('8')),
+          _digitKey('9', () => onDigit('9')),
         ]),
         row([
-          _key('지우기', onTap: onBackspace, background: AtmColors.secondary, foreground: Colors.white),
-          _key('0', onTap: () => onDigit('0')),
-          _key(confirmLabel, onTap: onConfirm, background: AtmColors.primary, foreground: Colors.white),
+          const SizedBox.shrink(),
+          _digitKey('0', () => onDigit('0')),
+          _backspaceKey(),
         ]),
+        const SizedBox(height: 12),
+        AtmPrimaryButton(label: confirmLabel, onPressed: onConfirm),
       ],
     );
   }

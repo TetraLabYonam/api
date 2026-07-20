@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/unit_type.dart';
 import '../../design_system/atm_bottom_action_bar.dart';
+import '../../design_system/atm_colors.dart';
 import '../../design_system/atm_option_list_item.dart';
+import '../../design_system/atm_secondary_button.dart';
 import '../auth/auth_provider.dart';
 import '../consent/consent_screen.dart';
 import 'job_repository.dart';
@@ -111,62 +113,86 @@ class _JobSearchScreenState extends ConsumerState<JobSearchScreen> {
       body: Column(
         children: [
           const Padding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+            padding: EdgeInsets.fromLTRB(24, 20, 24, 12),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text('어떤 일을 하시나요?',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AtmColors.primary)),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: TextField(
                     controller: _queryController,
-                    decoration: const InputDecoration(labelText: '청소, 화단, 쓰레기 줍기 등'),
+                    style: const TextStyle(fontSize: 18),
+                    decoration: InputDecoration(
+                      labelText: '청소, 화단, 쓰레기 줍기 등',
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AtmColors.border, width: 2),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AtmColors.border, width: 2),
+                      ),
+                    ),
                   ),
                 ),
-                IconButton(icon: const Icon(Icons.search), onPressed: _loading ? null : _search),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 64,
+                  width: 64,
+                  child: OutlinedButton(
+                    onPressed: _loading ? null : _search,
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: AtmColors.primary,
+                      side: const BorderSide(color: AtmColors.border, width: 2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: EdgeInsets.zero,
+                    ),
+                    child: const Icon(Icons.search, color: AtmColors.onPrimary),
+                  ),
+                ),
               ],
             ),
           ),
           if (_error != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(_error!, style: const TextStyle(color: Colors.red)),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+              child: Text(_error!, style: const TextStyle(color: AtmColors.error, fontWeight: FontWeight.bold)),
             ),
           if (_loading) const Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()),
           if (!_loading && _searchedOnce && _results.isEmpty)
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                onPressed: _searchWithAi,
-                child: const Text('AI로 더 찾아보기'),
-              ),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              child: AtmSecondaryButton(label: 'AI로 더 찾아보기', onPressed: _searchWithAi),
             ),
           Expanded(
             child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: _results.length,
               itemBuilder: (context, index) {
                 final place = _results[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                  child: AtmOptionListItem(
-                    title: place.name,
-                    subtitle: place.address,
-                    onTap: _loading ? null : () => _select(place),
-                  ),
+                return AtmOptionListItem(
+                  title: place.name,
+                  subtitle: place.address,
+                  onTap: _loading ? null : () => _select(place),
                 );
               },
             ),
           ),
         ],
       ),
-      bottomNavigationBar: AtmBottomActionBar.single(
-        label: '이전',
-        onPressed: () => Navigator.of(context).maybePop(),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+        child: AtmBottomActionBar.single(
+          label: '이전',
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
       ),
     );
   }

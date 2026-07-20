@@ -110,7 +110,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('출석 처리되었습니다.'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, '확인'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, '확인'), findsOneWidget);
   });
 
   testWidgets('아니오를 누르면 결석 처리 API를 호출하고 결과 화면에 메시지를 보여준다', (tester) async {
@@ -138,7 +138,7 @@ void main() {
 
     expect(declineCalled, isTrue);
     expect(find.text('결석 처리되었습니다.'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, '확인'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, '확인'), findsOneWidget);
   });
 
   testWidgets('결석 처리 API가 실패 응답을 반환하면 결과 화면에 서버 메시지를 보여준다', (tester) async {
@@ -168,7 +168,7 @@ void main() {
     // `_errorMessage`. Only a non-Dio exception (not exercised by this fake
     // adapter setup) would reach `_declineCheckIn()`'s own catch block.
     expect(find.text('서버 오류'), findsOneWidget);
-    expect(find.widgetWithText(ElevatedButton, '확인'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, '확인'), findsOneWidget);
   });
 
   testWidgets('위치 서비스가 꺼져 있으면 위치 확인 실패 안내를 보여준다', (tester) async {

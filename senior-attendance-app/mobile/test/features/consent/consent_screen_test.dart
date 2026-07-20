@@ -33,7 +33,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('동의 처리에 실패했습니다. 다시 시도해주세요.'), findsOneWidget);
-    expect(find.text('위치정보 수집 동의'), findsOneWidget);
+    expect(find.text('ATTENDANCE'), findsOneWidget);
   });
 
   testWidgets('아니오를 누르면 이전 화면으로 돌아간다', (tester) async {
@@ -50,7 +50,7 @@ void main() {
 
     await tester.tap(find.text('열기'));
     await tester.pumpAndSettle();
-    expect(find.text('위치정보 수집 동의'), findsOneWidget);
+    expect(find.text('ATTENDANCE'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(ElevatedButton, '아니오'));
     await tester.pumpAndSettle();

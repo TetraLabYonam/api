@@ -57,45 +57,47 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('위치정보 수집 동의')),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 24, 20, 12),
-            child: Text('위치정보 수집에\n동의하시겠어요?',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black)),
+      appBar: AppBar(title: const Text('ATTENDANCE')),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('출석 체크를 위해 위치정보\n수집에 동의해주세요',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AtmColors.primary, height: 1.3)),
+              const SizedBox(height: 16),
+              const Text(
+                '어르신의 현재 위치를 확인하여 출석을 안전하게 기록합니다.',
+                style: TextStyle(fontSize: 16, color: AtmColors.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: _showFullTerms,
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: AtmColors.onPrimary,
+                  foregroundColor: AtmColors.primary,
+                  side: const BorderSide(color: AtmColors.border, width: 2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  minimumSize: const Size(0, 48),
+                ),
+                child: const Text('자세히 보기', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Text(_error!, style: const TextStyle(color: AtmColors.error, fontWeight: FontWeight.bold)),
+              ],
+              if (_loading) const Padding(padding: EdgeInsets.only(top: 16), child: CircularProgressIndicator()),
+            ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              '출석 체크 시점의 위치(GPS)를 수집하며, 출석 확인 목적으로만 사용됩니다. 최초 1회만 동의하면 됩니다.',
-              style: TextStyle(fontSize: 15, color: Colors.black54),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            child: GestureDetector(
-              onTap: _showFullTerms,
-              child: const Text('자세히 보기',
-                  style: TextStyle(
-                      fontSize: 14,
-                      color: AtmColors.primary,
-                      decoration: TextDecoration.underline,
-                      fontWeight: FontWeight.bold)),
-            ),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(_error!, style: const TextStyle(color: Colors.red)),
-            ),
-          if (_loading) const Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()),
-        ],
+        ),
       ),
-      bottomNavigationBar: AtmBottomActionBar.confirm(
-        onYes: _loading ? null : _agree,
-        onNo: _decline,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+        child: AtmBottomActionBar.confirm(
+          onYes: _loading ? null : _agree,
+          onNo: _decline,
+        ),
       ),
     );
   }
