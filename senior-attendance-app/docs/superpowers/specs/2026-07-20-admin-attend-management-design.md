@@ -20,7 +20,9 @@ attend 공백 3번: 관리자가 특정 일정의 출석자 개별 상태를 조
 
 **신규 리포지토리 메서드**: `ScheduleRepository.findByPlaceIdAndScheduleDate(placeId, date)` — 1번 작업의 `existsByPlaceIdAndScheduleDate`와 짝을 이룸.
 
-**admin-web**: 신규 화면 1개("일정별 출석 관리") — 장소(기존 장소 목록 API 재사용)+날짜 선택 → 출석자 테이블 → 행 클릭 시 상태+사유 수정. 로비 화면에서 진입 링크 추가.
+**신규 `GET /api/admin/places`**: admin-web 장소 드롭다운용 전체 장소 목록. 기존 `GET /api/v1/places`는 `hasRole("MEMBER")`라 admin 토큰으로 호출 불가 — 그래서 admin 전용 엔드포인트가 필요 (기존 `PlaceSummaryDto` 재사용).
+
+**admin-web**: 신규 화면 1개("일정별 출석 관리") — 장소(`GET /api/admin/places`)+날짜 선택 → 출석자 테이블 → 행 클릭 시 상태+사유 수정. 로비 화면에서 진입 링크 추가.
 
 ## 데이터 흐름 / 상태 변화
 
