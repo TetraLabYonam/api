@@ -346,4 +346,30 @@ class ScheduleControllerIntegrationTest {
         assertTrue(attendees.stream().noneMatch(a ->
                 ((Number) a.get("memberId")).longValue() == otherMember.getId()));
     }
+
+    @Test
+    void get_withAdminToken_scheduleWithZeroAttendees_returns200WithEmptyAttendeeList() {
+        Place place = saveTestPlace();
+        Schedule schedule = scheduleRepository.save(Schedule.builder()
+                .title("오전 근무")
+                .scheduleDate(LocalDate.of(2026, 7, 13))
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(13, 0))
+                .place(place)
+                .build());
+
+        String accessToken = obtainAdminAccessToken();
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "http://localhost:" + port + "/api/admin/schedules?placeId=" + place.getId() + "&date=2026-07-13",
+                HttpMethod.GET, new HttpEntity<>(authHeaders(accessToken)), Map.class);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        Map body = resp.getBody();
+        assertEquals(schedule.getId().intValue(), ((Number) body.get("scheduleId")).intValue());
+
+        List<Map> attendees = (List<Map>) body.get("attendees");
+        assertNotNull(attendees);
+        assertEquals(0, attendees.size());
+    }
 }

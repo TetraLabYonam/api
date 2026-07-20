@@ -21,8 +21,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
      */
     @Query("SELECT DISTINCT s FROM Schedule s " +
            "JOIN FETCH s.place " +
-           "JOIN FETCH s.attends a " +
-           "JOIN FETCH a.member " +
+           "LEFT JOIN FETCH s.attends a " +
+           "LEFT JOIN FETCH a.member " +
            "WHERE s.place.id = :placeId AND s.scheduleDate = :scheduleDate")
     Optional<Schedule> findByPlaceIdAndScheduleDate(
             @Param("placeId") Long placeId,
