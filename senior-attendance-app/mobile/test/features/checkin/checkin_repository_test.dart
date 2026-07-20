@@ -30,6 +30,46 @@ void main() {
     expect(result.message, contains('허용 반경'));
   });
 
+  test('decline parses success result from response body', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = _FakeAdapter(
+      '{"success":true,"message":"결석 처리되었습니다."}',
+    );
+    final repository = CheckinRepository(dio: dio);
+
+    final result = await repository.decline(scheduleId: 1);
+
+    expect(result.success, isTrue);
+    expect(result.message, '결석 처리되었습니다.');
+  });
+
+  test('decline surfaces already-attended message with success false', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = _FakeAdapter(
+      '{"success":false,"message":"이미 출석 처리되었습니다."}',
+    );
+    final repository = CheckinRepository(dio: dio);
+
+    final result = await repository.decline(scheduleId: 1);
+
+    expect(result.success, isFalse);
+    expect(result.message, '이미 출석 처리되었습니다.');
+  });
+
+  test('decline surfaces the server error message on failure status', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = _FakeAdapter(
+      '{"message":"해당 일정의 출석 정보를 찾을 수 없습니다."}',
+      statusCode: 404,
+    );
+    final repository = CheckinRepository(dio: dio);
+
+    final result = await repository.decline(scheduleId: 1);
+
+    expect(result.success, isFalse);
+    expect(result.message, contains('찾을 수 없습니다'));
+  });
+
   test('getTodayAttend parses hasSchedule=true response', () async {
     final dio = Dio();
     dio.httpClientAdapter = _FakeAdapter(
