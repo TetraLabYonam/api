@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '../../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { AdminLayout } from '../../components/AdminLayout';
 import { AttendeeRow } from './AttendeeRow';
 import type { AttendanceStatus, PlaceSummary, ScheduleAttendance } from './types';
 
@@ -96,12 +97,25 @@ export function AttendManagementPage() {
   );
 
   return (
-    <div>
-      <h1>일정별 출석 관리</h1>
+    <AdminLayout>
       <div>
-        <label>
-          장소
-          <select value={placeId} onChange={(e) => setPlaceId(e.target.value)}>
+        <h1 style={{ fontSize: 24 }}>일정별 출석 관리</h1>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 14, marginTop: 4 }}>
+          장소와 날짜를 선택해 일정별 출석 상태를 확인하고 수정하세요
+        </p>
+      </div>
+
+      <div className="card" style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--space-md)' }}>
+        <div className="field" style={{ minWidth: 220 }}>
+          <label className="field-label" htmlFor="place-select">
+            장소
+          </label>
+          <select
+            id="place-select"
+            className="input"
+            value={placeId}
+            onChange={(e) => setPlaceId(e.target.value)}
+          >
             <option value="">장소 선택</option>
             {places?.map((place) => (
               <option key={place.id} value={place.id}>
@@ -109,35 +123,50 @@ export function AttendManagementPage() {
               </option>
             ))}
           </select>
-        </label>
-        <label>
-          날짜
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </label>
-        <button onClick={loadSchedule} disabled={!placeId}>
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="date-input">
+            날짜
+          </label>
+          <input
+            id="date-input"
+            className="input"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </div>
+        <button className="btn btn-primary" onClick={loadSchedule} disabled={!placeId}>
           조회
         </button>
       </div>
-      {placesError && <p>장소 목록을 불러오지 못했습니다</p>}
-      {error && <p>출석 정보를 불러오지 못했습니다</p>}
-      {notFound && <p>해당 날짜에 일정이 없습니다</p>}
-      {schedule && (
-        <table>
-          <thead>
-            <tr>
-              <th>이름</th>
-              <th>상태</th>
-              <th>사유</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {schedule.attendees.map((attendee) => (
-              <AttendeeRow key={attendee.attendId} attendee={attendee} onSave={handleSaveAttendee} />
-            ))}
-          </tbody>
-        </table>
+
+      {placesError && <p className="alert-error">장소 목록을 불러오지 못했습니다</p>}
+      {error && <p className="alert-error">출석 정보를 불러오지 못했습니다</p>}
+      {notFound && (
+        <div className="card" style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
+          해당 날짜에 일정이 없습니다
+        </div>
       )}
-    </div>
+      {schedule && (
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>이름</th>
+                <th>상태</th>
+                <th>사유</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {schedule.attendees.map((attendee) => (
+                <AttendeeRow key={attendee.attendId} attendee={attendee} onSave={handleSaveAttendee} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </AdminLayout>
   );
 }

@@ -1,9 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { AttendManagementPage } from './AttendManagementPage';
 import * as client from '../../api/client';
 import * as authContext from '../auth/AuthContext';
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <AttendManagementPage />
+    </MemoryRouter>
+  );
+}
 
 vi.mock('../../api/client', async () => {
   const actual = await vi.importActual<typeof client>('../../api/client');
@@ -85,7 +94,7 @@ describe('AttendManagementPage', () => {
         )
       );
 
-    render(<AttendManagementPage />);
+    renderPage();
     await selectPlaceAndSearch();
 
     expect(await screen.findByText('김철수')).toBeInTheDocument();
@@ -97,7 +106,7 @@ describe('AttendManagementPage', () => {
       .mockResolvedValueOnce(jsonResponse(PLACES))
       .mockResolvedValueOnce(new Response(null, { status: 404 }));
 
-    render(<AttendManagementPage />);
+    renderPage();
     await selectPlaceAndSearch();
 
     expect(await screen.findByText('해당 날짜에 일정이 없습니다')).toBeInTheDocument();
@@ -138,7 +147,7 @@ describe('AttendManagementPage', () => {
         )
       );
 
-    render(<AttendManagementPage />);
+    renderPage();
     const user = await selectPlaceAndSearch();
 
     await screen.findByText('김철수');

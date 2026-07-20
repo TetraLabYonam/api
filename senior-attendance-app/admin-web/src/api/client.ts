@@ -21,18 +21,35 @@ export async function login(username: string, password: string): Promise<boolean
   return true;
 }
 
+// The refresh token is single-use (rotated on every call), so two calls firing
+// close together — e.g. React 18 StrictMode's double effect invocation in dev —
+// would race: the second call arrives after the first already rotated the
+// cookie and fails as "invalid token". Sharing one in-flight promise collapses
+// concurrent callers onto a single network call instead.
+let refreshInFlight: Promise<boolean> | null = null;
+
 export async function refreshAccessToken(): Promise<boolean> {
-  const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    accessToken = null;
-    return false;
+  if (refreshInFlight) {
+    return refreshInFlight;
   }
-  const body = await res.json();
-  accessToken = body.accessToken;
-  return true;
+  refreshInFlight = (async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        accessToken = null;
+        return false;
+      }
+      const body = await res.json();
+      accessToken = body.accessToken;
+      return true;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
 }
 
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {

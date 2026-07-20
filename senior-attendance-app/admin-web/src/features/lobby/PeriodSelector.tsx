@@ -13,12 +13,13 @@ interface PeriodSelectorProps {
 
 export function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
   return (
-    <div role="tablist" aria-label="기간 선택">
+    <div role="tablist" aria-label="기간 선택" className="tabs">
       {OPTIONS.map((option) => (
         <button
           key={option.value}
           role="tab"
           aria-selected={value === option.value}
+          className="tab"
           onClick={() => onChange(option.value)}
         >
           {option.label}

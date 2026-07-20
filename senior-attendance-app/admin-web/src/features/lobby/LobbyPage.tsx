@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { apiFetch } from '../../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { AdminLayout } from '../../components/AdminLayout';
 import type { Period, UnitTypeAttendanceSummary } from '../../types/attendance';
 import { PeriodSelector } from './PeriodSelector';
 import { UnitTypeCard } from './UnitTypeCard';
@@ -35,24 +35,40 @@ export function LobbyPage() {
   }, [load]);
 
   return (
-    <div>
-      <h1>사업단별 출석 현황</h1>
-      <Link to="/attend-management">일정별 출석 관리</Link>
-      <PeriodSelector value={period} onChange={setPeriod} />
-      <button onClick={load}>새로고침</button>
+    <AdminLayout>
+      <div>
+        <h1 style={{ fontSize: 24 }}>사업단별 출석 현황</h1>
+        <p style={{ color: 'var(--color-text-muted)', fontSize: 14, marginTop: 4 }}>
+          오늘의 출석 현황을 한눈에 확인하세요
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+        <PeriodSelector value={period} onChange={setPeriod} />
+        <button type="button" className="btn btn-secondary btn-sm" onClick={load}>
+          새로고침
+        </button>
+      </div>
+
       {error && (
-        <div>
-          <p>출석률을 불러오지 못했습니다</p>
-          <button onClick={load}>재시도</button>
+        <div className="card" style={{ textAlign: 'center' }}>
+          <p className="alert-error" style={{ display: 'inline-block' }}>
+            출석률을 불러오지 못했습니다
+          </p>
+          <div>
+            <button type="button" className="btn btn-primary btn-sm" onClick={load}>
+              재시도
+            </button>
+          </div>
         </div>
       )}
       {!error && data && (
-        <div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-md)' }}>
           {data.map((summary) => (
             <UnitTypeCard key={summary.unitType} summary={summary} />
           ))}
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

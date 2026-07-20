@@ -29,6 +29,8 @@ export function AttendeeRow({ attendee, onSave }: AttendeeRowProps) {
       <td>
         <select
           aria-label={`${attendee.memberName} 상태`}
+          className="input"
+          style={{ height: 36 }}
           value={status}
           onChange={(e) => setStatus(e.target.value as AttendanceStatus)}
         >
@@ -42,12 +44,16 @@ export function AttendeeRow({ attendee, onSave }: AttendeeRowProps) {
       <td>
         <input
           aria-label={`${attendee.memberName} 사유`}
+          className="input"
+          style={{ height: 36, width: '100%' }}
           value={note}
           onChange={(e) => setNote(e.target.value)}
         />
       </td>
       <td>
-        <button onClick={() => onSave(attendee.attendId, status, note)}>저장</button>
+        <button className="btn btn-primary btn-sm" onClick={() => onSave(attendee.attendId, status, note)}>
+          저장
+        </button>
       </td>
     </tr>
   );
