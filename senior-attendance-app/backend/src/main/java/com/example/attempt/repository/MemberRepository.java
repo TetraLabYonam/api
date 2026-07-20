@@ -24,6 +24,17 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByPhoneNumber(String phoneNumber);
 
     /**
+     * 직번으로 회원 조회
+     */
+    Optional<Member> findByEmployeeId(Long employeeId);
+
+    /**
+     * 현재까지 부여된 최대 직번(없으면 1000)
+     */
+    @Query("SELECT COALESCE(MAX(m.employeeId), 1000) FROM Member m")
+    Long findMaxEmployeeIdOrDefault();
+
+    /**
      * 사업단명으로 회원 조회 (Unit은 Embedded 타입)
      */
     @Query("SELECT m FROM Member m WHERE m.unit.name = :unitName")

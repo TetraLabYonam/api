@@ -43,6 +43,15 @@ public class Member {
     @Column(name = "assigned_place_id")
     private Long assignedPlaceId;
 
+    @Column(name = "employee_id", unique = true)
+    private Long employeeId;
+
+    @Column(name = "phone_number_hash")
+    private String phoneNumberHash;
+
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
     public Member(String username, String phoneNumber) {
         this.username = username;
         this.phoneNumber = phoneNumber;
@@ -52,6 +61,13 @@ public class Member {
         this.username = username;
         this.phoneNumber = phoneNumber;
         this.guardianPhone = guardianPhone;
+    }
+
+    public static Member withPhoneNumberHash(String username, String phoneNumberHash) {
+        Member member = new Member();
+        member.username = username;
+        member.phoneNumberHash = phoneNumberHash;
+        return member;
     }
 
 }
