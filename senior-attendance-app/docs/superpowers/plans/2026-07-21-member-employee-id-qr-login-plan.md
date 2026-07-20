@@ -19,18 +19,18 @@
 
 ---
 
-## Task 1: Member 엔티티 — employeeId/phoneNumberHash/active 도입
+## Task 1: Member 엔티티 — employeeId/phoneNumberHash/active 추가 (확장 단계, 기존 필드는 그대로 둠)
+
+> **Expand/contract 노트:** 이 태스크는 "확장" 단계만 한다 — `employeeId`/`phoneNumberHash`/`active`를 새로 추가할 뿐, 기존 `phoneNumber` 필드·생성자·`findByPhoneNumber`는 전혀 건드리지 않는다. 그래야 이 태스크 하나만으로 완결되게 컴파일+테스트가 통과한다. 기존 `phoneNumber`를 실제로 지우는 "축소" 단계는 Task 3 끝에서 한다 — 그때는 Task 2에서 로그인 로직이 이미 새 필드로 옮겨간 뒤라, 남은 소비자(여러 테스트 파일)를 Task 3가 스윕하면서 안전하게 지울 수 있다.
 
 **Files:**
-- Modify: `backend/src/main/java/com/example/attempt/domain/Member.java`
-- Modify: `backend/src/main/java/com/example/attempt/repository/MemberRepository.java`
-- Modify: `backend/src/main/java/com/example/attempt/AttemptApplication.java:34-38` (죽은 시드 코드가 옛 생성자를 쓰므로 컴파일 깨짐 — `run()` 본문의 `Member`/`Attend` 로컬 변수 3줄과 빈 줄 전부 삭제, `Attend`/`Member` import 제거)
-- Modify (생성자 호출부 수정만, 로직 변경 없음): `backend/src/test/java/com/example/attempt/domain/PlaceMemberSchemaTest.java:36`, `backend/src/test/java/com/example/attempt/controller/AdminAttendControllerIntegrationTest.java:107`, `backend/src/test/java/com/example/attempt/controller/ScheduleControllerIntegrationTest.java:139,174,280,281,305`, `backend/src/test/java/com/example/attempt/repository/AttendRepositoryUnitTypeSummaryTest.java:41`, `backend/src/test/java/com/example/attempt/service/ScheduleServiceTest.java:63,64,83,106`
+- Modify: `backend/src/main/java/com/example/attempt/domain/Member.java` (필드/생성자 추가만, 기존 것 삭제 없음)
+- Modify: `backend/src/main/java/com/example/attempt/repository/MemberRepository.java` (메서드 추가만, 기존 것 삭제 없음)
 
 **Interfaces:**
-- Produces: `Member(String username, String phoneNumberHash)` 생성자(기존과 동일한 2-String 시그니처, 의미만 "평문"→"해시"로 변경), `member.getEmployeeId(): Long`, `member.isActive(): boolean`, `MemberRepository.findByEmployeeId(Long): Optional<Member>`, `MemberRepository.findMaxEmployeeIdOrDefault(): Long`(JPQL, `COALESCE(MAX(employeeId), 1000)`)
+- Produces: `Member.withPhoneNumberHash(String username, String phoneNumberHash): Member` 정적 팩토리(신규 — 기존 `Member(username, phoneNumber)` 2-arg 생성자와 파라미터 타입이 같아 새 생성자를 추가하면 오버로드가 충돌하므로, 생성자 대신 이름 있는 정적 팩토리로 만든다. **Task 2, 3, 4는 이 이름을 그대로 쓴다.**), `member.getEmployeeId(): Long`, `member.setEmployeeId(Long)`, `member.isActive(): boolean`(기본값 `true`), `MemberRepository.findByEmployeeId(Long): Optional<Member>`, `MemberRepository.findMaxEmployeeIdOrDefault(): Long`(JPQL, `COALESCE(MAX(employeeId), 1000)`)
 
-- [ ] **Step 1:** `Member.java`에서 `phoneNumber` 필드와 관련 생성자를 제거하고 아래로 교체:
+- [ ] **Step 1:** `Member.java`에 아래 필드+정적 팩토리 메서드를 **추가**(기존 `phoneNumber` 필드/생성자는 손대지 않는다 — 특히 새 생성자를 만들지 말 것. 기존 `Member(String username, String phoneNumber)` 2-arg 생성자와 파라미터 타입이 겹쳐 컴파일 에러가 난다):
   ```java
   @Column(name = "employee_id", unique = true)
   private Long employeeId;
@@ -41,14 +41,15 @@
   @Column(name = "active", nullable = false)
   private boolean active = true;
 
-  public Member(String username, String phoneNumberHash) {
-      this.username = username;
-      this.phoneNumberHash = phoneNumberHash;
+  public static Member withPhoneNumberHash(String username, String phoneNumberHash) {
+      Member member = new Member();
+      member.username = username;
+      member.phoneNumberHash = phoneNumberHash;
+      return member;
   }
   ```
-  기존 `Member(String username, String phoneNumber, String guardianPhone)` 3-arg 생성자는 삭제한다 — 유일한 호출부가 `AttemptApplication.java`의 죽은 코드(Step 3에서 삭제)뿐이라 이후로는 쓰이지 않는다. `guardianPhone`이 필요하면 `setGuardianPhone()`으로 충분하다.
 
-- [ ] **Step 2:** `MemberRepository.java`에서 `findByPhoneNumber` 삭제, 아래 추가:
+- [ ] **Step 2:** `MemberRepository.java`에 아래 메서드를 **추가**(기존 `findByPhoneNumber`는 그대로 둔다):
   ```java
   Optional<Member> findByEmployeeId(Long employeeId);
 
@@ -56,27 +57,17 @@
   Long findMaxEmployeeIdOrDefault();
   ```
 
-- [ ] **Step 3:** `AttemptApplication.java`의 `run()` 본문에서 죽은 `Member`/`Attend` 지역변수 3+1줄과 미사용 import 삭제 (컴파일 통과 목적, 원래도 `save()` 호출 없이 아무 효과 없던 코드).
-
-- [ ] **Step 4:** 위에 나열한 테스트 파일들의 `new Member("이름", "010....")` 호출부는 이제 두 번째 인자가 "해시"라는 의미이지만, 이 테스트들은 실제 해시 매칭을 검증하지 않으므로 문자열 값 자체는 그대로 둬도 무방 — 컴파일만 확인.
-
-- [ ] **Step 5:** 컴파일 확인
+- [ ] **Step 3:** 컴파일 + 전체 테스트 확인 (기존 코드를 전혀 건드리지 않았으므로 그대로 통과해야 한다)
   ```bash
-  cd backend && ./gradlew compileJava compileTestJava
+  cd backend && ./gradlew test 2>&1 | tail -15
   ```
-  Expected: BUILD SUCCESSFUL
+  Expected: BUILD SUCCESSFUL, 기존 112개 테스트 전부 그대로 통과 (개수 변화 없음)
 
-- [ ] **Step 6:** Commit
+- [ ] **Step 4:** Commit
   ```bash
   git add backend/src/main/java/com/example/attempt/domain/Member.java \
-          backend/src/main/java/com/example/attempt/repository/MemberRepository.java \
-          backend/src/main/java/com/example/attempt/AttemptApplication.java \
-          backend/src/test/java/com/example/attempt/domain/PlaceMemberSchemaTest.java \
-          backend/src/test/java/com/example/attempt/controller/AdminAttendControllerIntegrationTest.java \
-          backend/src/test/java/com/example/attempt/controller/ScheduleControllerIntegrationTest.java \
-          backend/src/test/java/com/example/attempt/repository/AttendRepositoryUnitTypeSummaryTest.java \
-          backend/src/test/java/com/example/attempt/service/ScheduleServiceTest.java
-  git commit -m "refactor(member): replace phoneNumber with employeeId+phoneNumberHash"
+          backend/src/main/java/com/example/attempt/repository/MemberRepository.java
+  git commit -m "feat(member): add employeeId/phoneNumberHash/active fields (expand step)"
   ```
 
 ---
@@ -119,7 +110,7 @@
   - `login_withWrongPhoneNumber_returns401`
   - `login_withUnknownEmployeeId_returns401`
   - `login_withInactiveMember_returns401` — `active=false`인 Member로 로그인 시도
-  각 테스트는 `@Autowired MemberRepository`, `@Autowired PasswordEncoder`로 직접 Member를 세팅한다(등록 API는 Task 4에서 생기므로 아직 리포지토리 직접 저장).
+  각 테스트는 `@Autowired MemberRepository`, `@Autowired PasswordEncoder`로 직접 Member를 세팅한다(등록 API는 Task 4에서 생기므로 아직 리포지토리 직접 저장). Member 생성은 `Member.withPhoneNumberHash(username, passwordEncoder.encode(phoneNumber))`로 만들고 `setEmployeeId(...)`, `setActive(...)`(비활성 테스트용)로 세팅 후 `memberRepository.save(...)`.
 
 - [ ] **Step 3:** 테스트 실행해서 실패 확인 (아직 `/login` 없음)
   ```bash
@@ -193,11 +184,14 @@
 
 ---
 
-## Task 3: 회원 인증 통합 테스트 헬퍼 스윕
+## Task 3: 회원 인증 통합 테스트 헬퍼 스윕 + phoneNumber 필드 제거 (contract 단계)
+
+> **Expand/contract 노트:** Task 1에서 `phoneNumber` 필드는 그대로 두고 새 필드만 추가했다(확장). 이 태스크의 뒷부분(Step 5부터)이 "축소" 단계다 — 이 시점엔 로그인/CurrentMemberService(Task 2)가 이미 새 필드로 옮겨갔고, 이 태스크 앞부분(Step 1-4)에서 남은 소비자(통합테스트 7개)까지 새 로그인 방식으로 옮기므로, 그 뒤엔 `phoneNumber` 필드를 실제로 지워도 안전하다.
 
 **Files:**
 - Create: `backend/src/test/java/com/example/attempt/support/MemberAuthTestSupport.java`
 - Modify (헬퍼 교체): `backend/src/test/java/com/example/attempt/controller/MemberSelfControllerIntegrationTest.java`, `AdminAttendanceControllerIntegrationTest.java`, `AdminAttendControllerIntegrationTest.java`, `AttendControllerIntegrationTest.java`, `AdminPlaceControllerIntegrationTest.java`(멤버 토큰 사용 여부 확인 후 필요시), `PlaceControllerIntegrationTest.java`, `ScheduleControllerIntegrationTest.java`
+- Modify (contract 단계, phoneNumber 필드 삭제로 인한 정리): `backend/src/main/java/com/example/attempt/domain/Member.java`, `backend/src/main/java/com/example/attempt/repository/MemberRepository.java`, `backend/src/main/java/com/example/attempt/AttemptApplication.java:34-38`(죽은 시드 코드 — `run()` 본문의 `Member`/`Attend` 로컬 변수 3+1줄과 미사용 import 삭제, 원래도 `save()` 호출 없이 아무 효과 없던 코드), `backend/src/test/java/com/example/attempt/domain/PlaceMemberSchemaTest.java:36`, `backend/src/test/java/com/example/attempt/controller/AdminAttendControllerIntegrationTest.java:107`, `backend/src/test/java/com/example/attempt/controller/ScheduleControllerIntegrationTest.java:139,174,280,281,305`, `backend/src/test/java/com/example/attempt/repository/AttendRepositoryUnitTypeSummaryTest.java:41`, `backend/src/test/java/com/example/attempt/service/ScheduleServiceTest.java:63,64,83,106`
 
 **Interfaces:**
 - Produces: `MemberAuthTestSupport.loginAsMember(TestRestTemplate restTemplate, int port, MemberRepository memberRepository, PasswordEncoder passwordEncoder, String username, String phoneNumber): String` — Member를 employeeId 자동채번(`findMaxEmployeeIdOrDefault()+1`)으로 저장하고 `/api/v1/member-auth/login`을 호출해 accessToken을 반환.
@@ -218,7 +212,7 @@
       public static String loginAsMember(TestRestTemplate restTemplate, int port,
               MemberRepository memberRepository, PasswordEncoder passwordEncoder,
               String username, String phoneNumber) {
-          Member member = new Member(username, passwordEncoder.encode(phoneNumber));
+          Member member = Member.withPhoneNumberHash(username, passwordEncoder.encode(phoneNumber));
           member.setEmployeeId(memberRepository.findMaxEmployeeIdOrDefault() + 1);
           member = memberRepository.save(member);
 
@@ -242,10 +236,31 @@
   ```
   Expected: `failures=0 errors=0`
 
-- [ ] **Step 4:** Commit
+- [ ] **Step 4:** Commit (여기서 한 번 커밋 — 아래 Step 5부터는 별도의 "contract" 커밋으로 분리)
   ```bash
   git add -A
   git commit -m "test(member-auth): sweep integration tests onto employeeId login helper"
+  ```
+
+- [ ] **Step 5 (contract 시작): `Member.java`에서 `phoneNumber` 필드와 관련 생성자 전부 삭제** — `Member(String username, String phoneNumber)` 2-arg 생성자, `Member(String username, String phoneNumber, String guardianPhone)` 3-arg 생성자, `phoneNumber` 필드 자체. `Member.withPhoneNumberHash(...)` 정적 팩토리와 `phoneNumberHash` 필드는 그대로 둔다.
+
+- [ ] **Step 6: `MemberRepository.java`에서 `findByPhoneNumber` 삭제.**
+
+- [ ] **Step 7: 나머지 컴파일 깨지는 곳 정리**
+  - `AttemptApplication.java`의 `run()` 본문에서 죽은 `Member`/`Attend` 지역변수 3+1줄과 미사용 import 삭제.
+  - `PlaceMemberSchemaTest.java:36`, `AdminAttendControllerIntegrationTest.java:107`, `ScheduleControllerIntegrationTest.java:139,174,280,281,305`, `AttendRepositoryUnitTypeSummaryTest.java:41`, `ScheduleServiceTest.java:63,64,83,106` — 이 파일들의 `new Member("이름", "010....")` 호출부를 `Member.withPhoneNumberHash("이름", "010....")`로 바꾼다(이 테스트들은 해시 매칭을 검증하지 않으므로 두 번째 인자 문자열 값 자체는 그대로 둬도 무방 — 호출 방식만 바뀐다).
+
+- [ ] **Step 8:** 백엔드 전체 테스트 재실행
+  ```bash
+  cd backend && ./gradlew test 2>&1 | tail -15
+  find backend/build/test-results -name "*.xml" | xargs grep -oh 'tests="[0-9]*" skipped="[0-9]*" failures="[0-9]*" errors="[0-9]*"' | awk -F'"' '{t+=$2; f+=$6; e+=$8} END {print "tests="t, "failures="f, "errors="e}'
+  ```
+  Expected: `failures=0 errors=0` (테스트 개수는 Step 3과 동일하게 유지 — 이 단계는 순수 리팩터링)
+
+- [ ] **Step 9:** Commit
+  ```bash
+  git add -A
+  git commit -m "refactor(member): remove plaintext phoneNumber field (contract step)"
   ```
 
 ---
@@ -292,7 +307,7 @@
   ```
   Expected: FAIL
 
-- [ ] **Step 4: `AdminMemberService` 작성** — `register()`(employeeId 자동채번은 Task 3과 동일하게 `findMaxEmployeeIdOrDefault()+1`, `phoneNumberHash = passwordEncoder.encode(phoneNumber)`, `placeRepository.findById` 없으면 `IllegalArgumentException`→컨트롤러에서 400 처리), `list()`, `updateActive(employeeId, active)`(없으면 `ResourceNotFoundException`→404).
+- [ ] **Step 4: `AdminMemberService` 작성** — `register()`(employeeId 자동채번은 Task 3과 동일하게 `findMaxEmployeeIdOrDefault()+1`, Member는 `Member.withPhoneNumberHash(name, passwordEncoder.encode(phoneNumber))`로 생성 후 `setEmployeeId(...)`/`setAssignedPlaceId(placeId)`, `placeRepository.findById` 없으면 `IllegalArgumentException`→컨트롤러에서 400 처리), `list()`, `updateActive(employeeId, active)`(없으면 `ResourceNotFoundException`→404).
 
 - [ ] **Step 5: `AdminMemberController` 작성** (`@RequestMapping("/api/admin/members")`, 기존 `AdminAttendanceController` 스타일).
 
