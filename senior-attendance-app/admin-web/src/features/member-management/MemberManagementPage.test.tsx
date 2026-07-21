@@ -86,8 +86,12 @@ describe('MemberManagementPage', () => {
   it('장소 미선택 시 등록 버튼이 비활성화된다', async () => {
     vi.mocked(client.apiFetch).mockResolvedValueOnce(jsonResponse(PLACES)).mockResolvedValueOnce(jsonResponse([]));
 
+    const user = userEvent.setup();
     renderPage();
     await waitForPlacesLoaded();
+
+    await user.type(screen.getByLabelText('이름'), '이영희');
+    await user.type(screen.getByLabelText('전화번호'), '01012345678');
 
     expect(screen.getByRole('button', { name: '등록' })).toBeDisabled();
   });
