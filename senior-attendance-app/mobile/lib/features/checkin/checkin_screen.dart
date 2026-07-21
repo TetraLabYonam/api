@@ -98,14 +98,20 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     );
     if (confirmed != true) return;
 
-    await ref.read(authRepositoryProvider).logout();
-    ref.invalidate(isLoggedInProvider);
-    ref.invalidate(meProvider);
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
+    try {
+      await ref.read(authRepositoryProvider).logout();
+      ref.invalidate(isLoggedInProvider);
+      ref.invalidate(meProvider);
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = '로그아웃에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
   }
 
   Future<void> _declineCheckIn() async {

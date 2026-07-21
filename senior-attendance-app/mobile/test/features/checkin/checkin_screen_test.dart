@@ -258,4 +258,29 @@ void main() {
     expect(find.byType(LoginScreen), findsOneWidget);
     expect(find.byType(CheckinScreen), findsNothing);
   });
+
+  testWidgets('로그아웃 처리 중 예외가 발생하면 오류 메시지를 보여주고 화면을 유지한다', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        apiClientProvider.overrideWithValue(fakeApiClient(
+          (options) async {
+            return jsonResponse('{"hasSchedule":false}');
+          },
+          secureStore: FakeThrowingSecureStore(),
+        )),
+      ],
+      child: const MaterialApp(home: CheckinScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.logout));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, '로그아웃'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('로그아웃에 실패했습니다. 다시 시도해주세요.'), findsOneWidget);
+    expect(find.byType(CheckinScreen), findsOneWidget);
+    expect(find.byType(LoginScreen), findsNothing);
+  });
 }
