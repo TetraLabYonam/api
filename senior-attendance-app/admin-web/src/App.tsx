@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { LoginPage } from './features/auth/LoginPage';
 import { LobbyPage } from './features/lobby/LobbyPage';
 import { AttendManagementPage } from './features/attend-management/AttendManagementPage';
+import { MemberManagementPage } from './features/member-management/MemberManagementPage';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { isLoggedIn, isLoading } = useAuth();
@@ -35,6 +36,14 @@ export function App() {
             element={
               <RequireAuth>
                 <AttendManagementPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/member-management"
+            element={
+              <RequireAuth>
+                <MemberManagementPage />
               </RequireAuth>
             }
           />
