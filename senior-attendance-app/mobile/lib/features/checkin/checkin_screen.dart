@@ -5,6 +5,7 @@ import '../../design_system/atm_bottom_action_bar.dart';
 import '../../design_system/atm_colors.dart';
 import '../attendance_history/attendance_history_screen.dart';
 import '../auth/auth_provider.dart';
+import '../auth/login_screen.dart';
 import 'checkin_repository.dart';
 
 class CheckinScreen extends ConsumerStatefulWidget {
@@ -77,6 +78,36 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     }
   }
 
+  Future<void> _confirmLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('로그아웃'),
+        content: const Text('로그아웃하시겠어요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('로그아웃'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    await ref.read(authRepositoryProvider).logout();
+    ref.invalidate(isLoggedInProvider);
+    ref.invalidate(meProvider);
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   Future<void> _declineCheckIn() async {
     final scheduleId = _today?.scheduleId;
     if (scheduleId == null || _declining) return;
@@ -147,6 +178,11 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
             onPressed: () {
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()));
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: '로그아웃',
+            onPressed: _confirmLogout,
           ),
         ],
       ),

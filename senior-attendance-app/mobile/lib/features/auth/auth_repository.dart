@@ -18,6 +18,8 @@ class AuthRepository {
     return accessToken;
   }
 
+  Future<void> logout() => tokenStorage.clear();
+
   Future<({bool locationConsentAgreed, int? assignedPlaceId})> me() async {
     final response = await dio.get('/api/v1/members/me');
     final data = response.data as Map<String, dynamic>;

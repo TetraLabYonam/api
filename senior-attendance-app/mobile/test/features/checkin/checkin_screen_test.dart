@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator_platform_interface/geolocator_platform_interface.dart';
 import 'package:senior_job_attendance/features/auth/auth_provider.dart';
+import 'package:senior_job_attendance/features/auth/login_screen.dart';
 import 'package:senior_job_attendance/features/checkin/checkin_screen.dart';
 
 import '../../support/fake_api_client.dart';
@@ -194,5 +195,67 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('위치 확인에 실패했습니다. 위치 서비스가 켜져 있는지 확인해주세요.'), findsOneWidget);
+  });
+
+  testWidgets('로그아웃 버튼을 탭하면 확인 다이얼로그가 뜬다', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        apiClientProvider.overrideWithValue(fakeApiClient((options) async {
+          return jsonResponse('{"hasSchedule":false}');
+        })),
+      ],
+      child: const MaterialApp(home: CheckinScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.logout));
+    await tester.pumpAndSettle();
+
+    expect(find.text('로그아웃하시겠어요?'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, '취소'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, '로그아웃'), findsOneWidget);
+  });
+
+  testWidgets('확인 다이얼로그에서 취소를 누르면 아무 일도 일어나지 않는다', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        apiClientProvider.overrideWithValue(fakeApiClient((options) async {
+          return jsonResponse('{"hasSchedule":false}');
+        })),
+      ],
+      child: const MaterialApp(home: CheckinScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.logout));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, '취소'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('로그아웃하시겠어요?'), findsNothing);
+    expect(find.byType(CheckinScreen), findsOneWidget);
+    expect(find.byType(LoginScreen), findsNothing);
+  });
+
+  testWidgets('확인 다이얼로그에서 로그아웃을 누르면 로그인 화면으로 이동한다', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        apiClientProvider.overrideWithValue(fakeApiClient((options) async {
+          return jsonResponse('{"hasSchedule":false}');
+        })),
+      ],
+      child: const MaterialApp(home: CheckinScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.logout));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, '로그아웃'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(CheckinScreen), findsNothing);
   });
 }
