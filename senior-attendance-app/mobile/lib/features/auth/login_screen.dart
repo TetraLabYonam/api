@@ -7,6 +7,7 @@ import '../../design_system/atm_primary_button.dart';
 import '../../design_system/atm_secondary_button.dart';
 import '../consent/consent_screen.dart';
 import 'auth_provider.dart';
+import 'qr_login_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -60,7 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _loginWithQr() {
-    // TODO(task-7): QrLoginScreen 연결
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const QrLoginScreen()));
   }
 
   InputDecoration _fieldDecoration(String hintText) {
