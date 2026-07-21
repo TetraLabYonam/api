@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'design_system/atm_colors.dart';
 import 'features/auth/auth_provider.dart';
-import 'features/auth/phone_login_screen.dart';
+import 'features/auth/login_screen.dart';
 import 'features/unit_selection/unit_selection_screen.dart';
 
 void main() {
@@ -43,9 +43,9 @@ class AuthGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoggedIn = ref.watch(isLoggedInProvider);
     return isLoggedIn.when(
-      data: (loggedIn) => loggedIn ? const UnitSelectionScreen() : const PhoneLoginScreen(),
+      data: (loggedIn) => loggedIn ? const UnitSelectionScreen() : const LoginScreen(),
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, _) => const PhoneLoginScreen(),
+      error: (_, _) => const LoginScreen(),
     );
   }
 }
