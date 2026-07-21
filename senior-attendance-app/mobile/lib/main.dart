@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'design_system/atm_colors.dart';
 import 'features/auth/auth_provider.dart';
 import 'features/auth/login_screen.dart';
-import 'features/unit_selection/unit_selection_screen.dart';
+import 'features/checkin/checkin_screen.dart';
+import 'features/consent/consent_screen.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -28,14 +29,12 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const AuthGate(),
-      routes: {
-        '/unit-selection': (context) => const UnitSelectionScreen(),
-      },
     );
   }
 }
 
-/// 앱 시작 시 저장된 accessToken 유무로 로그인 화면과 사업단 선택 화면 중 하나로 분기한다.
+/// 앱 시작 시 저장된 accessToken과 회원 정보(위치정보 동의 여부)를 조회해
+/// 로그인 화면 / 위치정보 동의 화면 / 체크인 화면 중 하나로 분기한다.
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
@@ -43,7 +42,15 @@ class AuthGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoggedIn = ref.watch(isLoggedInProvider);
     return isLoggedIn.when(
-      data: (loggedIn) => loggedIn ? const UnitSelectionScreen() : const LoginScreen(),
+      data: (loggedIn) {
+        if (!loggedIn) return const LoginScreen();
+        final me = ref.watch(meProvider);
+        return me.when(
+          data: (info) => info.locationConsentAgreed ? const CheckinScreen() : const ConsentScreen(),
+          loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (_, _) => const LoginScreen(),
+        );
+      },
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (_, _) => const LoginScreen(),
     );

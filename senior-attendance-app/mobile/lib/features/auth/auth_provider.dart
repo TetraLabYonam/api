@@ -16,3 +16,7 @@ final isLoggedInProvider = FutureProvider<bool>((ref) async {
   final token = await TokenStorage().readAccessToken();
   return token != null;
 });
+
+final meProvider = FutureProvider<({bool locationConsentAgreed, int? assignedPlaceId})>((ref) {
+  return ref.watch(authRepositoryProvider).me();
+});

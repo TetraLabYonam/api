@@ -17,4 +17,13 @@ class AuthRepository {
     await tokenStorage.saveAccessToken(accessToken);
     return accessToken;
   }
+
+  Future<({bool locationConsentAgreed, int? assignedPlaceId})> me() async {
+    final response = await dio.get('/api/v1/members/me');
+    final data = response.data as Map<String, dynamic>;
+    return (
+      locationConsentAgreed: data['locationConsentAgreed'] as bool,
+      assignedPlaceId: data['assignedPlaceId'] is int ? data['assignedPlaceId'] as int : null,
+    );
+  }
 }
