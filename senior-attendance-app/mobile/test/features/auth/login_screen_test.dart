@@ -38,7 +38,7 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, '로그인'));
     await tester.pumpAndSettle();
 
-    expect(find.text('직번 또는 전화번호를 확인해주세요.'), findsOneWidget);
+    expect(find.text('일치하는 회원이 없습니다.'), findsOneWidget);
     expect(find.byType(ConsentScreen), findsNothing);
     expect(find.byType(LoginScreen), findsOneWidget);
   });

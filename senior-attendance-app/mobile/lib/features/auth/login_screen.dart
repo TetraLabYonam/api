@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +45,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         MaterialPageRoute(builder: (_) => const ConsentScreen()),
         (route) => false,
       );
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final message = e.response?.data is Map
+          ? (e.response?.data['error'] as String? ?? '직번 또는 전화번호를 확인해주세요.')
+          : '직번 또는 전화번호를 확인해주세요.';
+      setState(() => _error = message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = '직번 또는 전화번호를 확인해주세요.');
