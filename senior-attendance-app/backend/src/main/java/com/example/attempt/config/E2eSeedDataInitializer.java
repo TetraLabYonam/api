@@ -14,6 +14,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -35,7 +36,8 @@ public class E2eSeedDataInitializer {
     CommandLineRunner seedE2eFixtures(PlaceRepository placeRepository,
                                        MemberRepository memberRepository,
                                        ScheduleRepository scheduleRepository,
-                                       AttendRepository attendRepository) {
+                                       AttendRepository attendRepository,
+                                       PasswordEncoder passwordEncoder) {
         return args -> {
             if (placeRepository.findAll().stream().anyMatch(p -> PLACE_NAME.equals(p.getName()))) {
                 return;
@@ -45,15 +47,20 @@ public class E2eSeedDataInitializer {
             place.setUnitType(UnitType.PUBLIC_INTEREST);
             place = placeRepository.save(place);
 
-            Member m1 = Member.withPhoneNumberHash(MEMBER_1_NAME, "01011111111");
+            long nextEmployeeId = memberRepository.findMaxEmployeeIdOrDefault() + 1;
+
+            Member m1 = Member.withPhoneNumberHash(MEMBER_1_NAME, passwordEncoder.encode("01011111111"));
+            m1.setEmployeeId(nextEmployeeId++);
             m1.setAssignedPlaceId(place.getId());
             m1 = memberRepository.save(m1);
 
-            Member m2 = Member.withPhoneNumberHash(MEMBER_2_NAME, "01022222222");
+            Member m2 = Member.withPhoneNumberHash(MEMBER_2_NAME, passwordEncoder.encode("01022222222"));
+            m2.setEmployeeId(nextEmployeeId++);
             m2.setAssignedPlaceId(place.getId());
             m2 = memberRepository.save(m2);
 
-            Member m3 = Member.withPhoneNumberHash(MEMBER_3_NAME, "01033333333");
+            Member m3 = Member.withPhoneNumberHash(MEMBER_3_NAME, passwordEncoder.encode("01033333333"));
+            m3.setEmployeeId(nextEmployeeId);
             m3.setAssignedPlaceId(place.getId());
             m3 = memberRepository.save(m3);
 
