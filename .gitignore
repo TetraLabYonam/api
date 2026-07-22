@@ -48,3 +48,7 @@ spy.log
 .claude/worktrees/
 
 PORTFOLIO.md
+
+### docker-compose 배포용 비밀값 ###
+.env
+senior-attendance-app/.env

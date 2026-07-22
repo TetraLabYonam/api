@@ -1,0 +1,29 @@
+# 운영(docker-compose on EC2) 프로필. SPRING_PROFILES_ACTIVE=prod 로 활성화한다.
+# 접속 정보는 전부 환경변수로 주입받고, 컨테이너 이미지에는 비밀값을 담지 않는다.
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:mariadb://${DB_HOST:mariadb}:${DB_PORT:3306}/${DB_NAME:senior_attendance}?useUnicode=true&characterEncoding=utf8
+    username: ${DB_USERNAME:senior}
+    password: ${DB_PASSWORD:seniorpw}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  h2:
+    console:
+      enabled: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    sql-migration-prefix: V
+    sql-migration-separator: __
+    sql-migration-suffixes: .sql
+
+logging:
+  level:
+    org.hibernate.SQL: warn

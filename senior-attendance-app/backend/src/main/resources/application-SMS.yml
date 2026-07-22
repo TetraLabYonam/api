@@ -1,5 +1,5 @@
 coolsms:
   api:
-    key: "" #쿨SMS에서 받은 API키
-    secret: "" #쿨SMS에서 받은 SECRET키
-    number: "" #핸드폰 번호
+    key: ${COOLSMS_API_KEY:} #쿨SMS에서 받은 API키
+    secret: ${COOLSMS_API_SECRET:} #쿨SMS에서 받은 SECRET키
+    number: ${COOLSMS_SENDER_NUMBER:} #핸드폰 번호
