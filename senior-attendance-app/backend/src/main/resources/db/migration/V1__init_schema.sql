@@ -1,146 +1,108 @@
 -- ============================================================================
--- Initial Schema Creation
--- Version: 1.0
--- Date: 2025-11-28
--- Description: 초기 스키마 생성
+-- Initial Schema
+-- 현재 JPA 엔티티(Admin, Place, Member, Schedule, Attend, RefreshToken,
+-- JobKeywordSynonym)가 실제로 기대하는 스키마와 정확히 일치하도록,
+-- 실제 MariaDB에 대해 Hibernate가 생성한 DDL을 캡처해 작성했다.
+-- (기존 V1~V5는 엔티티와 전혀 맞지 않아 실제로 적용된 적이 없었으므로 재작성함)
 -- ============================================================================
 
--- ============================================================================
--- 1. ADMIN 테이블
--- ============================================================================
-CREATE TABLE IF NOT EXISTS ADMIN (
-    ID BIGINT AUTO_INCREMENT PRIMARY KEY,
-    NAME VARCHAR(100) NOT NULL,
-    EMAIL VARCHAR(255) NOT NULL UNIQUE,
-    PASSWORD VARCHAR(255) NOT NULL,
-    ROLE VARCHAR(50) NOT NULL DEFAULT 'ADMIN',
-    CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+CREATE SEQUENCE place_seq START WITH 1 MINVALUE 1 MAXVALUE 9223372036854775806 INCREMENT BY 50 NOCACHE NOCYCLE ENGINE=InnoDB;
+CREATE SEQUENCE member_seq START WITH 1 MINVALUE 1 MAXVALUE 9223372036854775806 INCREMENT BY 50 NOCACHE NOCYCLE ENGINE=InnoDB;
 
--- ============================================================================
--- 2. PLACE 테이블
--- ============================================================================
-CREATE TABLE IF NOT EXISTS PLACE (
-    PLACE_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
-    NAME VARCHAR(200) NOT NULL,
-    ADDRESS VARCHAR(500) NOT NULL,
-    LATITUDE DOUBLE,
-    LONGITUDE DOUBLE,
-    IMAGE_URL VARCHAR(1000),
-    PHONE_NUMBER VARCHAR(20),
-    DESCRIPTION VARCHAR(1000),
-    CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+CREATE TABLE admin (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_admin_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============================================================================
--- 3. MEMBER 테이블
--- ============================================================================
-CREATE TABLE IF NOT EXISTS MEMBER (
-    MEMBER_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
-    NAME VARCHAR(100) NOT NULL,
-    EMAIL VARCHAR(255),
-    PHONE_NUMBER VARCHAR(20),
-    STATUS VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+CREATE TABLE place (
+    place_id BIGINT NOT NULL,
+    unit_name VARCHAR(255),
+    place_address VARCHAR(255),
+    latitude DOUBLE,
+    longitude DOUBLE,
+    image_url VARCHAR(255),
+    phone_number VARCHAR(255),
+    description VARCHAR(1000),
+    unit_type ENUM('MARKET','PUBLIC_INTEREST','SOCIAL_SERVICE'),
+    PRIMARY KEY (place_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============================================================================
--- 4. ROOM 테이블
--- ============================================================================
-CREATE TABLE IF NOT EXISTS ROOM (
-    ROOM_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
-    ROOM_NUMBER VARCHAR(50) NOT NULL,
-    STATUS VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
-    MEMBER_ID BIGINT,
-    CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT FK_ROOM_MEMBER FOREIGN KEY (MEMBER_ID) REFERENCES MEMBER(MEMBER_ID) ON DELETE SET NULL
-);
+CREATE TABLE member (
+    member_id BIGINT NOT NULL,
+    username VARCHAR(255),
+    guardian_phone VARCHAR(255),
+    unit_name VARCHAR(255),
+    unit_type VARCHAR(255),
+    location_consent_agreed_at DATETIME(6),
+    assigned_place_id BIGINT,
+    employee_id BIGINT,
+    phone_number_hash VARCHAR(255),
+    active BIT(1) NOT NULL,
+    PRIMARY KEY (member_id),
+    UNIQUE KEY uk_member_employee_id (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============================================================================
--- 5. TICKET_ISSUANCE 테이블
--- ============================================================================
-CREATE TABLE IF NOT EXISTS TICKET_ISSUANCE (
-    TICKET_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
-    MEMBER_ID BIGINT NOT NULL,
-    ROOM_ID BIGINT NOT NULL,
-    ISSUE_DATE TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    STATUS VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT FK_TICKET_MEMBER FOREIGN KEY (MEMBER_ID) REFERENCES MEMBER(MEMBER_ID) ON DELETE CASCADE,
-    CONSTRAINT FK_TICKET_ROOM FOREIGN KEY (ROOM_ID) REFERENCES ROOM(ROOM_ID) ON DELETE CASCADE
-);
+CREATE TABLE schedule (
+    schedule_id BIGINT NOT NULL AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL,
+    description VARCHAR(1000),
+    schedule_date DATE NOT NULL,
+    start_time TIME(6),
+    end_time TIME(6),
+    place_id BIGINT NOT NULL,
+    created_by BIGINT,
+    is_active BIT(1) NOT NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (schedule_id),
+    KEY idx_schedule_place (place_id),
+    KEY idx_schedule_created_by (created_by),
+    CONSTRAINT fk_schedule_place FOREIGN KEY (place_id) REFERENCES place (place_id),
+    CONSTRAINT fk_schedule_admin FOREIGN KEY (created_by) REFERENCES admin (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============================================================================
--- 6. SCHEDULE 테이블
--- ============================================================================
-CREATE TABLE IF NOT EXISTS SCHEDULE (
-    SCHEDULE_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
-    TITLE VARCHAR(200) NOT NULL DEFAULT '미지정 일정',
-    DESCRIPTION VARCHAR(1000),
-    SCHEDULE_DATE DATE NOT NULL,
-    START_TIME TIME,
-    END_TIME TIME,
-    PLACE_ID BIGINT NOT NULL,
-    CREATED_BY BIGINT,
-    IS_ACTIVE BOOLEAN NOT NULL DEFAULT TRUE,
-    CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT FK_SCHEDULE_PLACE FOREIGN KEY (PLACE_ID) REFERENCES PLACE(PLACE_ID) ON DELETE CASCADE,
-    CONSTRAINT FK_SCHEDULE_ADMIN FOREIGN KEY (CREATED_BY) REFERENCES ADMIN(ID) ON DELETE SET NULL
-);
+CREATE TABLE attend (
+    attend_id BIGINT NOT NULL AUTO_INCREMENT,
+    member_id BIGINT NOT NULL,
+    schedule_id BIGINT NOT NULL,
+    status ENUM('ABSENT','EXCUSED','LATE','PRESENT','SCHEDULED') NOT NULL,
+    latitude DOUBLE,
+    longitude DOUBLE,
+    attended_at DATETIME(6),
+    note VARCHAR(500),
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (attend_id),
+    KEY idx_attend_member (member_id),
+    KEY idx_attend_schedule (schedule_id),
+    CONSTRAINT fk_attend_member FOREIGN KEY (member_id) REFERENCES member (member_id),
+    CONSTRAINT fk_attend_schedule FOREIGN KEY (schedule_id) REFERENCES schedule (schedule_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============================================================================
--- 7. ATTEND 테이블
--- ============================================================================
-CREATE TABLE IF NOT EXISTS ATTEND (
-    ATTEND_ID BIGINT AUTO_INCREMENT PRIMARY KEY,
-    MEMBER_ID BIGINT NOT NULL,
-    SCHEDULE_ID BIGINT NOT NULL,
-    STATUS VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED',
-    LATITUDE DOUBLE,
-    LONGITUDE DOUBLE,
-    ATTENDED_AT TIMESTAMP NULL,
-    NOTE VARCHAR(500),
-    CREATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UPDATED_AT TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT FK_ATTEND_MEMBER FOREIGN KEY (MEMBER_ID) REFERENCES MEMBER(MEMBER_ID) ON DELETE CASCADE,
-    CONSTRAINT FK_ATTEND_SCHEDULE FOREIGN KEY (SCHEDULE_ID) REFERENCES SCHEDULE(SCHEDULE_ID) ON DELETE CASCADE,
-    CONSTRAINT CHK_ATTEND_STATUS CHECK (STATUS IN ('SCHEDULED', 'PRESENT', 'ABSENT', 'LATE', 'EXCUSED'))
-);
+CREATE TABLE refresh_token (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    username VARCHAR(100) NOT NULL,
+    token_hash VARCHAR(128) NOT NULL,
+    device_id VARCHAR(255),
+    issued_at DATETIME(6) NOT NULL,
+    expires_at DATETIME(6) NOT NULL,
+    revoked BIT(1) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_refresh_token_hash (token_hash),
+    KEY idx_refresh_token_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ============================================================================
--- 8. 인덱스 생성
--- ============================================================================
+CREATE TABLE job_keyword_synonym (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    place_id BIGINT NOT NULL,
+    keyword VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_synonym_place (place_id),
+    CONSTRAINT fk_synonym_place FOREIGN KEY (place_id) REFERENCES place (place_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- PLACE 인덱스
-CREATE INDEX IDX_PLACE_NAME ON PLACE(NAME);
-
--- MEMBER 인덱스
-CREATE INDEX IDX_MEMBER_EMAIL ON MEMBER(EMAIL);
-CREATE INDEX IDX_MEMBER_STATUS ON MEMBER(STATUS);
-
--- SCHEDULE 인덱스
-CREATE INDEX IDX_SCHEDULE_DATE ON SCHEDULE(SCHEDULE_DATE);
-CREATE INDEX IDX_SCHEDULE_PLACE ON SCHEDULE(PLACE_ID);
-CREATE INDEX IDX_SCHEDULE_ACTIVE ON SCHEDULE(IS_ACTIVE);
-CREATE INDEX IDX_SCHEDULE_CREATED_BY ON SCHEDULE(CREATED_BY);
-
--- ATTEND 인덱스
-CREATE INDEX IDX_ATTEND_MEMBER ON ATTEND(MEMBER_ID);
-CREATE INDEX IDX_ATTEND_SCHEDULE ON ATTEND(SCHEDULE_ID);
-CREATE INDEX IDX_ATTEND_STATUS ON ATTEND(STATUS);
-CREATE INDEX IDX_ATTEND_MEMBER_SCHEDULE ON ATTEND(MEMBER_ID, SCHEDULE_ID);
-
--- ROOM 인덱스
-CREATE INDEX IDX_ROOM_STATUS ON ROOM(STATUS);
-CREATE INDEX IDX_ROOM_MEMBER ON ROOM(MEMBER_ID);
-
--- TICKET 인덱스
-CREATE INDEX IDX_TICKET_MEMBER ON TICKET_ISSUANCE(MEMBER_ID);
-CREATE INDEX IDX_TICKET_ROOM ON TICKET_ISSUANCE(ROOM_ID);
-CREATE INDEX IDX_TICKET_STATUS ON TICKET_ISSUANCE(STATUS);
+CREATE INDEX idx_synonym_keyword ON job_keyword_synonym(keyword);
