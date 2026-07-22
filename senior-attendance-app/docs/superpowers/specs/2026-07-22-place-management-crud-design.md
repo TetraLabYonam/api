@@ -20,20 +20,21 @@
 
 ## 주요 계약
 
-**`POST /api/admin/places`** (신규)
-`{ name, address, unitType, description?, latitude, longitude }` — name/address/unitType/latitude/longitude 필수(위경도는 출석 반경 검증에 실제로 쓰이므로 필수). 생성된 장소를 `active=true`로 저장하고 `PlaceAdminSummaryDto` 반환.
+| Method | Endpoint | Body | 필수 필드 | 설명 |
+|---|---|---|---|---|
+| POST | `/api/admin/places` (신규) | `{ name, address, unitType, description?, latitude, longitude }` | name, address, unitType, latitude, longitude | 위경도는 출석 반경 검증에 실제로 쓰여 필수. `active=true`로 생성, `PlaceAdminSummaryDto` 반환 |
+| PATCH | `/api/admin/places/{id}` (신규) | `{ name, address, unitType, description?, latitude, longitude, active }` | 전체 필드 | 부분 patch 아님 — 수정 모달이 통째로 저장. placeId 없으면 404 |
+| GET | `/api/admin/places` (기존, 응답 변경) | — | — | 관리자용이므로 active 무관 전체 반환. 응답에 `active` 필드 추가 (`PlaceSummaryDto`에 추가 또는 `PlaceAdminSummaryDto` 신설은 구현 시 판단) |
 
-**`PATCH /api/admin/places/{id}`** (신규)
-`{ name, address, unitType, description?, latitude, longitude, active }` — 전체 필드 세트로 갱신(부분 patch 아님, 수정 모달이 통째로 저장). placeId 없으면 404.
+**일반 사용자 노출 경로는 active=true만**
 
-**`GET /api/admin/places`** (기존, 응답에 `active` 필드 추가)
-관리자 화면용이므로 active 무관하게 전체 반환. `AdminPlaceController`가 반환하는 DTO를 `PlaceSummaryDto`에서 `active`를 포함하는 `PlaceAdminSummaryDto`로 교체(또는 `PlaceSummaryDto`에 `active` 필드 추가 — 회원용 `/api/v1/places` 쪽 DTO와 공유 여부는 구현 시 판단).
-
-**일반 사용자 노출 경로는 active=true만** — `PlaceRepository.findByUnitType`, `searchByUnitTypeAndKeyword`에 `active = true` 조건 추가. `/api/v1/places`(회원 자기서비스 검색)에 자동 반영.
-
-**기존 admin-web 화면 2곳도 비활성 장소 숨김** (신규 API가 active 필드를 실어 나르면서 생기는 자연스러운 결과):
-- `MemberManagementPage`의 장소 select — `places?.filter(p => p.active)`
-- `AttendManagementPage`의 장소 select — 동일하게 필터
+| 대상 | 변경 |
+|---|---|
+| `PlaceRepository.findByUnitType` | `active = true` 조건 추가 |
+| `PlaceRepository.searchByUnitTypeAndKeyword` | `active = true` 조건 추가 |
+| `/api/v1/places` (회원 자기서비스 검색) | 위 리포지토리 변경으로 자동 반영 |
+| `MemberManagementPage` 장소 select | `places?.filter(p => p.active)` |
+| `AttendManagementPage` 장소 select | 동일하게 필터 |
 
 ## 화면 구성
 
@@ -65,14 +66,18 @@
 
 ## 테스트 계획
 
-- 백엔드: `AdminPlaceController`/`AdminPlaceService`(신규 분리 여부는 구현 시 판단) 단위 테스트 — 생성/수정/비활성화, 검증 실패 케이스
-- admin-web 단위: `PlaceManagementPage.test.tsx` — 기존 `MemberManagementPage.test.tsx` 패턴 (등록 성공/필수값 누락 시 버튼 비활성화/목록 렌더링/토글/수정 모달)
-- admin-web e2e: `place-management.spec.ts` — 등록→목록 반영, 필수값 검증, 수정 모달 저장 반영, 활성/비활성 토글 후 새로고침 유지, 비활성 장소가 회원 등록 드롭다운에서 사라지는지
+| 종류 | 파일 | 케이스 |
+|---|---|---|
+| 백엔드 단위 | `AdminPlaceController`/`AdminPlaceService`(신규 분리 여부는 구현 시 판단) | 생성/수정/비활성화, 검증 실패 케이스 |
+| admin-web 단위 | `PlaceManagementPage.test.tsx` (기존 `MemberManagementPage.test.tsx` 패턴) | 등록 성공, 필수값 누락 시 버튼 비활성화, 목록 렌더링, 토글, 수정 모달 |
+| admin-web e2e | `place-management.spec.ts` | 등록→목록 반영, 필수값 검증, 수정 모달 저장 반영, 활성/비활성 토글 후 새로고침 유지, 비활성 장소가 회원 등록 드롭다운에서 사라지는지 |
 
 ## 검증 기준
 
-- 장소 생성/수정이 실제 DB에 반영되는가 (새로고침 후에도 유지)
-- 위경도 필수 검증이 걸리는가 (없으면 400)
-- 비활성 장소가 회원 등록/일정별 출석 관리 드롭다운과 회원 자기서비스 검색에서 실제로 사라지는가
-- 관리자 화면(장소 관리)에서는 비활성 장소도 계속 보이고 재활성화 가능한가
-- 401/403 권한 경계가 지켜지는가
+| 항목 | 확인 방법 |
+|---|---|
+| 장소 생성/수정이 실제 DB에 반영되는가 | 새로고침 후에도 값 유지되는지 확인 |
+| 위경도 필수 검증이 걸리는가 | 누락 시 400 응답 확인 |
+| 비활성 장소가 일반 노출 경로에서 사라지는가 | 회원 등록/일정별 출석 관리 드롭다운, 회원 자기서비스 검색에서 안 보이는지 |
+| 관리자 화면은 비활성 장소도 보이는가 | 장소 관리 화면에서 비활성 장소 확인 + 재활성화 가능한지 |
+| 권한 경계가 지켜지는가 | MEMBER 토큰으로 접근 시 403, 미인증 시 401 |
