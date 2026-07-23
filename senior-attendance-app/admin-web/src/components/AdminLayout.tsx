@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: '/', label: '출석 현황' },
   { to: '/attend-management', label: '일정별 출석 관리' },
   { to: '/member-management', label: '회원 관리' },
+  { to: '/place-management', label: '장소 관리' },
 ];
 
 export function AdminLayout({ children }: { children: ReactNode }) {
