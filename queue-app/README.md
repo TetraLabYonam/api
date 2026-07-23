@@ -1,14 +1,23 @@
 # 번호표 큐 앱
 
-이 폴더는 번호표 발급/호출 시스템을 위한 자리다. 기존 백엔드 컨트롤러는
-2025년 12월 커밋(`9cc1533`)에서 삭제되어, `backend/legacy-reference/`
-아래의 코드는 참고용일 뿐 실제로 작동하지 않는다.
+번호표 발급·호출 시스템입니다. `backend/`는 Spring Boot API, `mobile/`은 이용자와 관리자 Flutter 앱입니다.
 
-- `backend/` — 참고용 레거시 코드 + 신규 스키마 설계 문서. 실제 Gradle
-  프로젝트로 재구축하는 작업은 별도 계획에서 진행한다.
-- `admin-mobile/` — 아직 없음. 신규 개발 예정.
-- `member-mobile/` — 아직 없음. 신규 개발 예정.
+## Docker Compose 로컬 실행
 
-설계 배경: `docs/superpowers/specs/2026-07-13-project-split-senior-queue-design.md`
-(저장소 루트 `docs/`, 이 문서 자체는 시니어 근태관리 쪽으로 옮기지 않고
-루트에 남겨진 원본을 참조한다 — 두 시스템 모두에 관련된 설계이기 때문).
+Docker와 Compose가 설치된 환경에서 실제 로컬 환경 파일을 만든 뒤 한 명령으로 시작합니다.
+
+```shell
+cp .env.example .env
+docker compose up --build
+```
+
+웹 UI: 기본 <http://localhost:8080>. 웹 컨테이너의 Nginx가 `/api/`와 `/actuator/`를 API로 프록시하므로 브라우저 CORS 설정이 필요 없습니다. DB는 기본적으로 호스트에 노출하지 않습니다. 8080 포트가 사용 중이면 `.env`의 `WEB_PORT=8081`처럼 변경합니다.
+
+```shell
+docker compose logs -f              # 로그
+docker compose stop                 # 일시 중지
+docker compose down                 # 컨테이너 제거
+docker compose down -v              # 컨테이너와 DB 데이터 초기화
+```
+
+`.env`의 값은 로컬 전용 합성 값으로 유지하고 운영 비밀값을 저장소에 커밋하지 마세요.

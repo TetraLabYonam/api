@@ -52,3 +52,13 @@ PORTFOLIO.md
 ### docker-compose 배포용 비밀값 ###
 .env
 senior-attendance-app/.env
+
+### GJC agent session state ###
+.gjc/
+
+### Terraform ###
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log

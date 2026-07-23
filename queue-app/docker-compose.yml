@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Copy .env.example to .env first}
+      POSTGRES_USER: ${POSTGRES_USER:?Copy .env.example to .env first}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env first}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    environment:
+      QUEUE_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      QUEUE_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      QUEUE_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      QUEUE_HMAC_KEY: ${QUEUE_HMAC_KEY:?Copy .env.example to .env first}
+      QUEUE_HMAC_KEY_VERSION: ${QUEUE_HMAC_KEY_VERSION:?Copy .env.example to .env first}
+      QUEUE_ADMIN_TOKEN: ${QUEUE_ADMIN_TOKEN:?Copy .env.example to .env first}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q 'UP'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./mobile
+      args:
+        API_BASE_URL: ""
+        DOMAIN_TOKEN: ${DOMAIN_TOKEN:-}
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

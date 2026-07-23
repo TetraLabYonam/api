@@ -1,0 +1,9 @@
+.git
+.env
+**/.gradle
+**/build
+**/.dart_tool
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/ios/Pods
+**/android/.gradle

@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    # All connection settings are environment supplied; there are deliberately no development credentials.
+    url: ${QUEUE_DATASOURCE_URL}
+    username: ${QUEUE_DATASOURCE_USERNAME}
+    password: ${QUEUE_DATASOURCE_PASSWORD}
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+    prometheus:
+      access: unrestricted
+
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+queue:
+  # Bootstrap-only administrator authentication. Replace with an identity-provider integration before public deployment.
+  # No secret has a fallback: all three values must be supplied by the environment.
+  hmac-key: ${QUEUE_HMAC_KEY}
+  hmac-key-version: ${QUEUE_HMAC_KEY_VERSION}
+  admin-token: ${QUEUE_ADMIN_TOKEN}
