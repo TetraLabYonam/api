@@ -108,4 +108,29 @@ class PlaceControllerIntegrationTest {
         assertEquals(200, resp.getStatusCodeValue());
         assertEquals(1, resp.getBody().length);
     }
+
+    @Test
+    void listByUnitType_excludesInactivePlaces() {
+        Place active = new Place("활성장소", "주소1", 35.3, 129.0);
+        active.setUnitType(UnitType.PUBLIC_INTEREST);
+        placeRepository.save(active);
+
+        Place inactive = new Place("비활성장소", "주소2", 35.4, 129.1);
+        inactive.setUnitType(UnitType.PUBLIC_INTEREST);
+        inactive.setActive(false);
+        placeRepository.save(inactive);
+
+        String accessToken = MemberAuthTestSupport.loginAsMember(
+                restTemplate, port, memberRepository, passwordEncoder, "김할매", "01012340003");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+
+        String url = "http://localhost:" + port + "/api/v1/places?unitType=PUBLIC_INTEREST";
+        ResponseEntity<Map[]> resp = restTemplate.exchange(
+                url, HttpMethod.GET, new HttpEntity<>(headers), Map[].class);
+
+        assertEquals(200, resp.getStatusCodeValue());
+        assertEquals(1, resp.getBody().length);
+        assertEquals("활성장소", resp.getBody()[0].get("name"));
+    }
 }

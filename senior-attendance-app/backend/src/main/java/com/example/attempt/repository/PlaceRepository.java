@@ -10,12 +10,13 @@ import java.util.List;
 
 public interface PlaceRepository extends JpaRepository<Place, Long> {
 
-    List<Place> findByUnitType(UnitType unitType);
+    List<Place> findByUnitTypeAndActiveTrue(UnitType unitType);
 
     @Query("""
         SELECT DISTINCT p FROM Place p
         LEFT JOIN JobKeywordSynonym s ON s.place = p
         WHERE p.unitType = :unitType
+        AND p.active = true
         AND (
             LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
             OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))

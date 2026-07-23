@@ -47,7 +47,7 @@ public class PlaceSearchService {
     }
 
     public List<PlaceSummaryDto> listByUnitType(UnitType unitType) {
-        return placeRepository.findByUnitType(unitType).stream()
+        return placeRepository.findByUnitTypeAndActiveTrue(unitType).stream()
                 .map(this::toDto)
                 .toList();
     }
@@ -88,6 +88,7 @@ public class PlaceSearchService {
                 .description(place.getDescription())
                 .latitude(place.getLatitude())
                 .longitude(place.getLongitude())
+                .active(place.isActive())
                 .build();
     }
 }

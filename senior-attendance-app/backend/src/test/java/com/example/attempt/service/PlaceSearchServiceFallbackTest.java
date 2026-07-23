@@ -48,7 +48,7 @@ class PlaceSearchServiceFallbackTest {
         com.example.attempt.domain.Place candidate = new com.example.attempt.domain.Place("스쿨존실버봉사단1", "주소", 35.3, 129.0);
         candidate.setUnitType(UnitType.PUBLIC_INTEREST);
         candidate.setId(7L);
-        when(placeRepository.findByUnitType(UnitType.PUBLIC_INTEREST)).thenReturn(List.of(candidate));
+        when(placeRepository.findByUnitTypeAndActiveTrue(UnitType.PUBLIC_INTEREST)).thenReturn(List.of(candidate));
         when(llmClient.pickBestMatch(eq("학교 앞에서 깃발"), anyList())).thenReturn(Optional.of(7L));
         when(placeRepository.findById(7L)).thenReturn(Optional.of(candidate));
 
@@ -62,7 +62,7 @@ class PlaceSearchServiceFallbackTest {
     void searchWithFallback_returnsEmpty_whenLlmPicksNothing() {
         when(placeRepository.searchByUnitTypeAndKeyword(UnitType.PUBLIC_INTEREST, "알 수 없는 일"))
                 .thenReturn(List.of());
-        when(placeRepository.findByUnitType(UnitType.PUBLIC_INTEREST)).thenReturn(List.of());
+        when(placeRepository.findByUnitTypeAndActiveTrue(UnitType.PUBLIC_INTEREST)).thenReturn(List.of());
         when(llmClient.pickBestMatch(eq("알 수 없는 일"), anyList())).thenReturn(Optional.empty());
 
         List<PlaceSummaryDto> result = service.searchWithFallback(UnitType.PUBLIC_INTEREST, "알 수 없는 일");
@@ -79,7 +79,7 @@ class PlaceSearchServiceFallbackTest {
         com.example.attempt.domain.Place candidate = new com.example.attempt.domain.Place("스쿨존실버봉사단1", "주소", 35.3, 129.0);
         candidate.setUnitType(UnitType.PUBLIC_INTEREST);
         candidate.setId(7L);
-        when(placeRepository.findByUnitType(UnitType.PUBLIC_INTEREST)).thenReturn(List.of(candidate));
+        when(placeRepository.findByUnitTypeAndActiveTrue(UnitType.PUBLIC_INTEREST)).thenReturn(List.of(candidate));
         // LLM이 후보 목록(id=7)에 없는 id=999를 반환 (환각 또는 다른 unitType 소속)
         when(llmClient.pickBestMatch(eq("학교 앞에서 깃발"), anyList())).thenReturn(Optional.of(999L));
 
