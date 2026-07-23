@@ -172,7 +172,7 @@ export function MemberManagementPage() {
             onChange={(e) => setPlaceId(e.target.value)}
           >
             <option value="">장소 선택</option>
-            {places?.map((place) => (
+            {places?.filter((place) => place.active).map((place) => (
               <option key={place.id} value={place.id}>
                 {place.name}
               </option>

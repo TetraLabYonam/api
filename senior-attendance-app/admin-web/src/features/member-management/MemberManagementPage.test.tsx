@@ -32,7 +32,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 const PLACES = [
-  { id: 1, name: '행복경로당', address: '서울시', unitType: 'PUBLIC_INTEREST', description: '', latitude: 0, longitude: 0 },
+  { id: 1, name: '행복경로당', address: '서울시', unitType: 'PUBLIC_INTEREST', description: '', latitude: 0, longitude: 0, active: true },
 ];
 
 const MEMBERS = [{ employeeId: 1001, name: '김철수', placeId: 1, placeName: '행복경로당', active: true }];

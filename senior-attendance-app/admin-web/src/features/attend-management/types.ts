@@ -8,6 +8,7 @@ export interface PlaceSummary {
   description: string;
   latitude: number;
   longitude: number;
+  active: boolean;
 }
 
 export interface Attendee {
