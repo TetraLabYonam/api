@@ -18,4 +18,5 @@ public class PlaceSummaryDto {
     private String description;
     private Double latitude;
     private Double longitude;
+    private boolean active;
 }
