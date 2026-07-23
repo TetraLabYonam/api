@@ -333,8 +333,9 @@ export function PlaceManagementPage() {
                   <button
                     className="btn btn-secondary btn-sm"
                     onClick={() => handleToggleActive(place, !place.active)}
+                    aria-label={`${place.name} ${place.active ? '비활성화' : '활성화'}`}
                   >
-                    {place.name} {place.active ? '비활성화' : '활성화'}
+                    {place.active ? '비활성화' : '활성화'}
                   </button>
                 </td>
               </tr>

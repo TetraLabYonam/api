@@ -83,5 +83,12 @@ test.describe('장소 관리', () => {
     await expect(page).toHaveURL('/member-management');
     const placeSelect = page.locator('#member-place-select');
     await expect(placeSelect.locator('option', { hasText: uniqueName })).toHaveCount(0);
+
+    // 관리자 화면에서 재활성화 가능한지 확인
+    await page.getByRole('link', { name: '장소 관리' }).click();
+    await expect(page).toHaveURL('/place-management');
+    const rowAfterNav = page.getByRole('row', { name: new RegExp(uniqueName) });
+    await rowAfterNav.getByRole('button', { name: new RegExp(`${uniqueName} 활성화`) }).click();
+    await expect(rowAfterNav.locator('.badge')).toHaveText('활성');
   });
 });
